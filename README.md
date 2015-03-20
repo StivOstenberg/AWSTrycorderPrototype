@@ -1,2 +1,16 @@
 # EC2EventMonitor
-A scanner that utilizes an AWS Credential file to build a list of accounts, then scans all regions in each profile for EC2 instances with events scheduled.
+A scanner that utilizes an AWS Credential file to build a list of accounts, then scans all regions in each account profile for EC2 instances with events scheduled. Useful if you are managing a large number of AWS accounts.
+
+           https://cloud.githubusercontent.com/assets/11429268/6623680/a9eecdf8-c8a1-11e4-85ad-0473a1521705.png
+
+This project should prove useful for folks who need a starting framework for building an app that will access AWS.  It shows how to load credentials and use those credentials to access AWS API calls.
+
+Written in C# with APIs from the AWS Developer Toolkit.  Requires .NET Framework 4.5.  Executable included in the bin/debug directory in case you dont need or cant build project yourself.
+
+Relies on the AWS credential file to build a list of accounts.  
+By default , the file should be placed at ~/.aws/credentials, where ~ represents your HOME directory.
+This file will be created automatically if you add the credentials in Visual Studio,  or you can create it yourself using instructions from 
+
+           http://docs.aws.amazon.com/aws-sdk-php/guide/latest/credentials.html
+
+Check the section "Using the AWS credentials file and credential profiles".
