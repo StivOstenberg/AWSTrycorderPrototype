@@ -14,8 +14,8 @@
         <Button x:Name="EC2EventScanButton" Content="ScanProfilesforEvents" HorizontalAlignment="Right" Margin="0,0,34.4,18.8" Width="131" Height="22" VerticalAlignment="Bottom" Click="EC2EventScanButton_Click" Grid.Column="1"/>
         <DataGrid x:Name="DaGrid" Margin="10,63,10.4,68.8" Grid.ColumnSpan="2">
         </DataGrid>
-        <ProgressBar x:Name="ProgressBar1" HorizontalAlignment="Left" Height="22" Margin="268,445,0,0" VerticalAlignment="Top" Width="121"/>
-        <Label x:Name="ProcessingLabel" Content="." HorizontalAlignment="Left" Margin="54,413,0,0" VerticalAlignment="Top" Width="530" Grid.ColumnSpan="2"/>
+        <ProgressBar x:Name="ProgressBar1" HorizontalAlignment="Left" Margin="268,0,0,9.8" Width="121" Height="22" VerticalAlignment="Bottom"/>
+        <Label x:Name="ProcessingLabel" Content="." HorizontalAlignment="Left" Margin="54,0,0,37.8" Width="530" Grid.ColumnSpan="2" Height="26" VerticalAlignment="Bottom"/>
 
     </Grid>
 </Window>

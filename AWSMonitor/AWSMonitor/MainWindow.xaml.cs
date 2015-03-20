@@ -137,17 +137,22 @@ namespace AWSMonitor
                     var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
                     var request = new DescribeInstanceStatusRequest();
                     var response = ec2.DescribeInstanceStatus(request);
+
                     int count = response.InstanceStatuses.Count();
                     foreach (var instat in response.InstanceStatuses)
                     {
                         //Collect the datases
+                        string instanceid = instat.InstanceId;
+
+                        //How do we get the tag keys for an instance??? Argh!
                         var status = instat.Status.Status;
                         string AZ = instat.AvailabilityZone;
-                        string instanceid = instat.InstanceId;
                         string profile = aprofile;
                         string myregion = region.DisplayName + "  -  " + region.SystemName;
                         int eventnumber = instat.Events.Count();
                         string eventlist = "";
+
+
                         if (eventnumber > 0)
                         {
                             foreach (var anevent in instat.Events)
@@ -155,7 +160,12 @@ namespace AWSMonitor
                                 eventlist += anevent.Description + "/n";
                             }
                         }
+
+
+
                         //Add to table
+
+
                         MyDataTable.Rows.Add(profile, myregion, instanceid, AZ, status, eventnumber, eventlist);
 
                     }
