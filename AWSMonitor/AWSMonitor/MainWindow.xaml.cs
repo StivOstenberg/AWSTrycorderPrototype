@@ -29,9 +29,11 @@ namespace AWSMonitor
         public MainWindow()
         {
             InitializeComponent();
-
+            ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             var Profiles = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase);
-            
+
+            ProfilesComboBox.Items.Add("_All_");
+            RegionsCombobox.Items.Add("_All_");
             foreach(string aProfile in Profiles)
             {
                 ProfilesComboBox.Items.Add(aProfile);
@@ -71,17 +73,14 @@ namespace AWSMonitor
 
         private void Process()
         {
+            ProgressBar1.Visibility = System.Windows.Visibility.Visible;
             DataTable MyDataTable = GetEC2StatusTable();
             
             //Set Default For Testing...
             var region = Amazon.RegionEndpoint.USWest2;
             
 
-            //Configure the ProgressBar
-            ProgressBar1.Minimum = 0;
-            //Subtract 2 from the count for Beijing and GovWest
-            ProgressBar1.Maximum = ProfilesComboBox.Items.Count;
-            ProgressBar1.Value = 0;
+
 
             //Stores the value of the ProgressBar
             double value = 0;
@@ -90,15 +89,43 @@ namespace AWSMonitor
             // to the ProgressBar's SetValue method.
             UpdateProgressBarDelegate updatePbDelegate =  new UpdateProgressBarDelegate(ProgressBar1.SetValue);
 
+            var prof2process = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase).ToList();
+            var regions2process = Amazon.RegionEndpoint.EnumerableAllRegions.ToList();
+            //override complete list with one profile.
+            if(!ProfilesComboBox.SelectedValue.Equals("_All_"))
+            {
+                prof2process.Clear();
+                prof2process.Add(ProfilesComboBox.SelectedValue.ToString());
+            }
+
+            if(!RegionsCombobox.SelectedValue.Equals("_All_"))
+            {
+                regions2process.Clear();
+                foreach(var iregion in Amazon.RegionEndpoint.EnumerableAllRegions)
+                {
+                    if(iregion.DisplayName.Equals(RegionsCombobox.SelectedValue.ToString()))
+                    {
+                        regions2process.Add(iregion);
+                    }
+                }
+            }
+
+            //Configure the ProgressBar
+            ProgressBar1.Minimum = 0;
+            //Subtract 2 from the count for Beijing and GovWest
+            ProgressBar1.Maximum = prof2process.Count * regions2process.Count;
+            ProgressBar1.Value = 0;
 
             // Start the loops.  For each Profile, iterate through all regions.
             //Foreach Profile(credential) set aprofile
-            foreach (var aprofile in Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase))
+
+            
+            foreach (var aprofile in prof2process)
             {
                 Amazon.Runtime.AWSCredentials credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
 
                 //Foreach aregion
-                foreach (var aregion in Amazon.RegionEndpoint.EnumerableAllRegions)
+                foreach (var aregion in regions2process)
                 {
                     //Skip GovCloud and Beijing. They require special handling and I dont need em.
                     if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
@@ -132,13 +159,14 @@ namespace AWSMonitor
                         MyDataTable.Rows.Add(profile, myregion, instanceid, AZ, status, eventnumber, eventlist);
 
                     }
-
+                    value++;
                 }
                 
-                value++;
+   
 
             }
             DaGrid.ItemsSource = MyDataTable.AsDataView();
+            ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             ProcessingLabel.Content = "Done Processing";
         }
 
