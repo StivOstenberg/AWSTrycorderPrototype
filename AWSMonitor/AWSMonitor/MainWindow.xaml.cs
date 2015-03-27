@@ -58,11 +58,13 @@ namespace AWSMonitor
             DataTable table = new DataTable();
             table.Columns.Add("Profile", typeof(string));
             table.Columns.Add("Region", typeof(string));
+            table.Columns.Add("Name", typeof(string));
             table.Columns.Add("InstanceID", typeof(string));
             table.Columns.Add("AvailabilityZone", typeof(string));
             table.Columns.Add("Status", typeof(string));
             table.Columns.Add("Events", typeof(int));
             table.Columns.Add("EventList", typeof(string));
+            table.Columns.Add("Tags", typeof(string));
 
             return table;
         }
@@ -75,7 +77,7 @@ namespace AWSMonitor
         {
             ProgressBar1.Visibility = System.Windows.Visibility.Visible;
             DataTable MyDataTable = GetEC2StatusTable();
-            
+            TagFilterCombo.Items.Clear();
             //Set Default For Testing...
             var region = Amazon.RegionEndpoint.USWest2;
             
@@ -138,12 +140,14 @@ namespace AWSMonitor
                     var request = new DescribeInstanceStatusRequest();
                     var response = ec2.DescribeInstanceStatus(request);
 
+
                     int count = response.InstanceStatuses.Count();
+
                     foreach (var instat in response.InstanceStatuses)
                     {
                         //Collect the datases
                         string instanceid = instat.InstanceId;
-
+                        string instancename = "";
                         //How do we get the tag keys for an instance??? Argh!
                         var status = instat.Status.Status;
                         string AZ = instat.AvailabilityZone;
@@ -152,12 +156,41 @@ namespace AWSMonitor
                         int eventnumber = instat.Events.Count();
                         string eventlist = "";
 
+                        var requesttags = new DescribeTagsRequest();
+                        var dafilter = new Filter();
+                        dafilter.Name = "resource-id";
+                        dafilter.Values.Add(instanceid);
+                        requesttags.Filters.Add(dafilter);
+                        var tagresponse = ec2.DescribeTags(requesttags);
+
+                        var rabbit = tagresponse.Tags;
+                        string tags = "";
+                        foreach(var atag in rabbit)
+                        {
+                            if (atag.Key.Equals("Name"))
+                            {
+                                instancename = atag.Value;
+                                continue;
+                            }
+                            if(!TagFilterCombo.Items.Contains(atag.Key))
+                            {
+                                TagFilterCombo.Items.Add(atag.Key);
+                            }
+                            if (tags.Length > 1)
+                            {
+                                tags += "\n" + atag.Key + ":" + atag.Value ;
+                            }
+                            else
+                            {
+                                tags += atag.Key + ":" + atag.Value ;
+                            }
+                        }
 
                         if (eventnumber > 0)
                         {
                             foreach (var anevent in instat.Events)
                             {
-                                eventlist += anevent.Description + "/n";
+                                eventlist += anevent.Description + "\n";
                             }
                         }
 
@@ -166,7 +199,7 @@ namespace AWSMonitor
                         //Add to table
 
 
-                        MyDataTable.Rows.Add(profile, myregion, instanceid, AZ, status, eventnumber, eventlist);
+                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags);
 
                     }
                     value++;
