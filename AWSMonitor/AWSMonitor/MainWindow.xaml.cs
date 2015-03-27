@@ -26,8 +26,10 @@ namespace AWSMonitor
     /// </summary>
     public partial class MainWindow : Window
     {
+        public DataTable RawResults = GetEC2StatusTable();
         public MainWindow()
         {
+            DataTable MyDataTable = GetEC2StatusTable();
             InitializeComponent();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             var Profiles = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase);
@@ -208,9 +210,66 @@ namespace AWSMonitor
    
 
             }
+            RawResults = MyDataTable;
             DaGrid.ItemsSource = MyDataTable.AsDataView();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             ProcessingLabel.Content = "Done Processing";
+            CountLabel.Content = "Results Displayed: " + RawResults.Rows.Count;
+        }
+
+        private void TagFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                FilterTagText.Text = TagFilterCombo.SelectedValue.ToString();
+            }
+            catch
+            { }
+        }
+
+        private void DoFilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            var newtable = RawResults.Copy();
+            string fxp = ""; // The string what will build our query.
+            if (FilterTagText.Equals("")) return;
+            if (StatusCheckbox.IsChecked==true)
+            {
+                fxp += "Events != '0' ";
+            }
+            if(EventCheckbox.IsChecked==true)
+            {
+                if (fxp.Length > 2) fxp += " and ";
+                fxp += "Status != 'ok'";
+            }
+            if (fxp.Length > 2) fxp += " and ";
+            else
+            {
+                var newbie = from record in RawResults.AsEnumerable()
+                             where record.Field<string>("Tags").Contains(FilterTagText.Text)
+                             select record;
+                var newdt = GetEC2StatusTable();
+                int count = newbie.Count();
+                foreach(var element in newbie)
+                {
+                    var row = newdt.NewRow();
+                    row = element;
+                    newdt.ImportRow(row);
+
+                }
+                DaGrid.ItemsSource = newdt.AsDataView();
+                CountLabel.Content = "Results Displayed: "+ newdt.Rows.Count;
+            }
+
+
+
+
+
+
+        }
+
+        private void ClearFilters_Click(object sender, RoutedEventArgs e)
+        {
+            DaGrid.ItemsSource = RawResults.AsDataView();
         }
 
     }
