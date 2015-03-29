@@ -67,6 +67,8 @@ namespace AWSMonitor
             table.Columns.Add("Events", typeof(int));
             table.Columns.Add("EventList", typeof(string));
             table.Columns.Add("Tags", typeof(string));
+            table.Columns.Add("Pub IP", typeof(string));
+            table.Columns.Add("Pub DNS", typeof(string));
 
             return table;
         }
@@ -135,21 +137,32 @@ namespace AWSMonitor
                     if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
                     if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
                     region = aregion;
-                    ProcessingLabel.Content = "Checking Profile:" + aprofile + "    Region: " + region;
+                    ProcessingLabel.Content = "Pro:" + aprofile + "    Reg: " + region;
                     Dispatcher.Invoke(updatePbDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, value });
                     //Try to get scheduled events on my Profile/aregion
                     var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
                     var request = new DescribeInstanceStatusRequest();
-                    var response = ec2.DescribeInstanceStatus(request);
 
 
-                    int count = response.InstanceStatuses.Count();
+                    var instatresponse = ec2.DescribeInstanceStatus(request);
 
-                    foreach (var instat in response.InstanceStatuses)
+
+                    var indatarequest = new DescribeInstancesRequest();
+                        foreach (var instat in instatresponse.InstanceStatuses)
+                    {
+                        indatarequest.InstanceIds.Add(instat.InstanceId);
+                    }
+                    DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
+
+
+                    int count = instatresponse.InstanceStatuses.Count();
+
+                    foreach (var instat in instatresponse.InstanceStatuses)
                     {
                         //Collect the datases
                         string instanceid = instat.InstanceId;
                         string instancename = "";
+                        ProcessingLabel.Content = "Pro:" + aprofile + "    Reg: " + region + "   Ins: " + instanceid;
                         //How do we get the tag keys for an instance??? Argh!
                         var status = instat.Status.Status;
                         string AZ = instat.AvailabilityZone;
@@ -157,17 +170,24 @@ namespace AWSMonitor
                         string myregion = region.DisplayName + "  -  " + region.SystemName;
                         int eventnumber = instat.Events.Count();
                         string eventlist = "";
+                        var urtburgle = DescResult.Reservations;
 
-                        var requesttags = new DescribeTagsRequest();
-                        var dafilter = new Filter();
-                        dafilter.Name = "resource-id";
-                        dafilter.Values.Add(instanceid);
-                        requesttags.Filters.Add(dafilter);
-                        var tagresponse = ec2.DescribeTags(requesttags);
+                        string tags = ""; // Holds the list of tags to print out.
 
-                        var rabbit = tagresponse.Tags;
-                        string tags = "";
-                        foreach(var atag in rabbit)
+                        var loadtags = (from t in DescResult.Reservations
+                                       where t.Instances[0].InstanceId.Equals(instanceid)
+                                       select t.Instances[0].Tags).AsEnumerable();
+
+                        Dictionary<string,string> taglist = new Dictionary<string,string>();
+                        foreach(var rekey in loadtags)
+                        {
+                           foreach(var kvp in rekey)
+                           {
+                               taglist.Add(kvp.Key, kvp.Value);
+                           }
+                        }
+
+                        foreach(var atag in taglist)
                         {
                             if (atag.Key.Equals("Name"))
                             {
@@ -196,12 +216,21 @@ namespace AWSMonitor
                             }
                         }
 
+                        //Need more info for SSH and SCP...
 
+
+                        var publicIP = (from t in urtburgle
+                                      where t.Instances[0].InstanceId.Equals(instanceid)
+                                      select t.Instances[0].PublicIpAddress).FirstOrDefault();
+
+                        var publicDNS = (from t in urtburgle
+                                     where t.Instances[0].InstanceId.Equals(instanceid)
+                                     select t.Instances[0].PublicDnsName).FirstOrDefault();
 
                         //Add to table
 
 
-                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags);
+                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags, publicIP, publicDNS);
 
                     }
                     value++;
