@@ -46,3 +46,6 @@ C:\Users\stiv.MYTHOS\OneDrive\Projects\EC2EventMonitor\AWSMonitor\AWSMonitor\obj
 C:\Users\stiv.MYTHOS\OneDrive\Projects\EC2EventMonitor\AWSMonitor\AWSMonitor\obj\Debug\EC2EventMonitor.g.resources
 C:\Users\stiv.MYTHOS\OneDrive\Projects\EC2EventMonitor\AWSMonitor\AWSMonitor\obj\Debug\AWSMonitor.Properties.Resources.resources
 C:\Users\stiv.MYTHOS\OneDrive\Projects\EC2EventMonitor\AWSMonitor\AWSMonitor\obj\Debug\AWSMonitor.csproj.GenerateResource.Cache
+C:\Users\s.ostenberg\Source\Repos\EC2InstanceMonitor\AWSMonitor\AWSMonitor\bin\Debug\WinSCPnet.dll
+C:\Users\s.ostenberg\Source\Repos\EC2InstanceMonitor\AWSMonitor\AWSMonitor\bin\Debug\WinSCP.exe
+C:\Users\s.ostenberg\Source\Repos\EC2InstanceMonitor\AWSMonitor\AWSMonitor\obj\Debug\EC2EventMonitor_Content.g.cs

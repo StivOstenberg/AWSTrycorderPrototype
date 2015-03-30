@@ -5,13 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-
+using System.Diagnostics;
+using System.Windows.Forms;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -19,6 +21,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml;
+using System.Xml.XPath;
+using WinSCP;
 
 namespace AWSMonitor
 {
@@ -28,6 +33,19 @@ namespace AWSMonitor
     public partial class MainWindow : Window
     {
         public DataTable RawResults = GetEC2StatusTable();
+
+
+        public string Filepicker()
+        {
+            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
+            ofd.Filter = "Data Sources (*.py, *.sh)|*.py*;*.sh|All Files|*.*"; ;
+            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+
+                return (ofd.FileName);
+            }
+            return ("");
+        }
         public MainWindow()
         {
             DataTable MyDataTable = GetEC2StatusTable();
@@ -166,7 +184,7 @@ namespace AWSMonitor
                     if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
                     region = aregion;
                     ProcessingLabel.Content = "Pro:" + aprofile + "    Reg: " + region;
-                    Dispatcher.Invoke(updatePbDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, value });
+                    Dispatcher.Invoke(updatePbDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { System.Windows.Controls.ProgressBar.ValueProperty, value });
                     //Try to get scheduled events on my Profile/aregion
                     var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
                     var request = new DescribeInstanceStatusRequest();
@@ -272,7 +290,7 @@ namespace AWSMonitor
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             ProcessingLabel.Content = "Done Processing";
             CountLabel.Content = "Results Displayed: " + RawResults.Rows.Count;
-            ContextMenu Contextor = new ContextMenu();
+            System.Windows.Controls.ContextMenu Contextor = new System.Windows.Controls.ContextMenu();
             
             
         }
@@ -292,15 +310,7 @@ namespace AWSMonitor
             var newtable = RawResults.Copy();
             string fxp = ""; // The string what will build our query.
             if (FilterTagText.Equals("")) return;
-            if (StatusCheckbox.IsChecked==true)
-            {
-                fxp += "Events != '0' ";
-            }
-            if(EventCheckbox.IsChecked==true)
-            {
-                if (fxp.Length > 2) fxp += " and ";
-                fxp += "Status != 'ok'";
-            }
+
             if (fxp.Length > 2) fxp += " and ";
             else
             {
@@ -338,37 +348,20 @@ namespace AWSMonitor
 
             DaGrid.ItemsSource = LoadEC2Data();
             DaGrid.ContextMenu = ECContext;
-            MenuItem SSH = new MenuItem();
+            System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
             SSH.Click += new RoutedEventHandler(SSH_Click);
             SSH.Header = "Open SSH";
 
-            MenuItem SCP = new MenuItem();
+            System.Windows.Controls.MenuItem SCP = new System.Windows.Controls.MenuItem();
             SCP.Click += new RoutedEventHandler(SCP_Click);
             SCP.Header = "Open SCP";
+            
 
             ECContext.Items.Add(SSH);
             ECContext.Items.Add(SCP);
         }
 
-        private ContextMenu ECContext = new ContextMenu();
-
-        private void ECContext_MouseUp(object sender, MouseEventArgs e)
-        {
-            // Load context menu on right mouse click
-            
-           
-           // if (e.MouseDevice. == MouseButton.Right)
-            {
-             //   hitTestInfo = dataGridView.HitTest(e.X, e.Y);
-                // If column is first column
-             //   if (hitTestInfo.Type == DataGridViewHitTestType.Cell && hitTestInfo.ColumnIndex == 0)
-              //      contextMenuForColumn1.Show(dataGridView, new Point(e.X, e.Y));
-             // /  // If column is second column
-             //   if (hitTestInfo.Type == DataGridViewHitTestType.Cell && hitTestInfo.ColumnIndex == 1)
-              //      contextMenuForColumn2.Show(dataGridView, new Point(e.X, e.Y));
-            }
-        }
-
+        private System.Windows.Controls.ContextMenu ECContext = new System.Windows.Controls.ContextMenu();
 
         private void SSH_Click(object sender, EventArgs e)
         {
@@ -377,14 +370,91 @@ namespace AWSMonitor
             
         }
 
-        private void SCP_Click(object sender, EventArgs e)
+        private void SCP_Click(object sender, RoutedEventArgs e)
         {
             string action = "SCP";
+
+           
+
         }
 
-        private void ProcessContent(string action, string ipaddress)
+        private void ProcessContext(string action, string ipaddress)
         {
 
+        }
+
+        private void FilepickerButton_Click(object sender, RoutedEventArgs e)
+        {
+            LocalFileTextbox.Text = Filepicker();
+        }
+
+        private void FileCopyButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        public bool CopyFile(string host, string user, string pass, string sfile, string ddir)
+        {
+            const string logname = "log.xml";
+
+            // Run hidden WinSCP process
+            Process winscp = new Process();
+            winscp.StartInfo.FileName = "winscp.com";
+            winscp.StartInfo.Arguments = "/xmllog=\"" + logname + "\"";
+            winscp.StartInfo.UseShellExecute = false;
+            winscp.StartInfo.RedirectStandardInput = true;
+            winscp.StartInfo.RedirectStandardOutput = true;
+            winscp.StartInfo.CreateNoWindow = true;
+            winscp.StartInfo.UserName = user;
+            
+            winscp.Start();
+
+            // Feed in the scripting commands
+            
+            winscp.StandardInput.WriteLine("option batch abort");
+            winscp.StandardInput.WriteLine("option confirm off");
+            winscp.StandardInput.WriteLine("open mysession");
+            winscp.StandardInput.WriteLine("cd " + ddir);
+            //winscp.StandardInput.WriteLine("put " + sfile);
+            winscp.StandardInput.Close();
+
+            // Collect all output (not used in this example)
+            string output = winscp.StandardOutput.ReadToEnd();
+
+            // Wait until WinSCP finishes
+            winscp.WaitForExit();
+
+            // Parse and interpret the XML log
+            // (Note that in case of fatal failure the log file may not exist at all)
+            XPathDocument log = new XPathDocument(logname);
+            XmlNamespaceManager ns = new XmlNamespaceManager(new NameTable());
+            ns.AddNamespace("w", "http://winscp.net/schema/session/1.0");
+            XPathNavigator nav = log.CreateNavigator();
+
+            // Success (0) or error?
+            if (winscp.ExitCode != 0)
+            {
+                Console.WriteLine("Error occured");
+
+                // See if there are any messages associated with the error
+                foreach (XPathNavigator message in nav.Select("//w:message", ns))
+                {
+                    Console.WriteLine(message.Value);
+                }
+            }
+            else
+            {
+                // It can be worth looking for directory listing even in case of
+                // error as possibly only upload may fail
+
+                XPathNodeIterator files = nav.Select("//w:file", ns);
+                Console.WriteLine(string.Format("There are {0} files and subdirectories:", files.Count));
+                foreach (XPathNavigator file in files)
+                {
+                    Console.WriteLine(file.SelectSingleNode("w:filename/@value", ns).Value);
+                }
+            }
+            return false;
         }
     }
 }
