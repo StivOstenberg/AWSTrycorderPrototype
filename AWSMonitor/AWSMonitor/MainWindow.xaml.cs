@@ -54,6 +54,7 @@ namespace AWSMonitor
         }
 
         private delegate void UpdateProgressBarDelegate(System.Windows.DependencyProperty dp, Object value);
+
         static DataTable GetEC2StatusTable()
         {
             // Here we create a DataTable with four columns.
@@ -72,6 +73,32 @@ namespace AWSMonitor
 
             return table;
         }
+
+
+
+        public class EC2Instance
+        {
+            public string Profile { get; set; }
+            public string Region { get; set; }
+            public string Name { get; set; }
+            public string InstanceID { get; set; }
+            public string AvailabilityZone { get; set; }
+            public string Status { get; set; }
+            public int Events { get; set; }
+            public string EventList { get; set; }
+            public string Tags { get; set; }
+            public string PubIP { get; set; }
+            public string PubDNS { get; set; }
+
+        }
+
+        private List<EC2Instance>  LoadEC2Data()
+        {
+            List<EC2Instance> thedata = new List<EC2Instance>();
+
+            return thedata;
+        }
+
         private void EC2EventScanButton_Click(object sender, RoutedEventArgs e)
         {
             Process();
@@ -244,6 +271,9 @@ namespace AWSMonitor
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             ProcessingLabel.Content = "Done Processing";
             CountLabel.Content = "Results Displayed: " + RawResults.Rows.Count;
+            ContextMenu Contextor = new ContextMenu();
+            
+            
         }
 
         private void TagFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -287,6 +317,7 @@ namespace AWSMonitor
                 }
                 DaGrid.ItemsSource = newdt.AsDataView();
                 CountLabel.Content = "Results Displayed: "+ newdt.Rows.Count;
+
             }
 
 
@@ -300,6 +331,20 @@ namespace AWSMonitor
         {
             DaGrid.ItemsSource = RawResults.AsDataView();
         }
+
+        private void DaGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            DaGrid.ItemsSource = LoadEC2Data();
+            DaGrid.ContextMenu = ECContext;
+            ECContext.Items.Add("Open SSH");
+            ECContext.Items.Add("Open SCP");
+        }
+
+        private ContextMenu ECContext = new ContextMenu();
+
+
+
+
 
     }
 }
