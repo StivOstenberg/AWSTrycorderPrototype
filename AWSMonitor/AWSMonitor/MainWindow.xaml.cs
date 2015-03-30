@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -334,17 +335,56 @@ namespace AWSMonitor
 
         private void DaGrid_Loaded(object sender, RoutedEventArgs e)
         {
+
             DaGrid.ItemsSource = LoadEC2Data();
             DaGrid.ContextMenu = ECContext;
-            ECContext.Items.Add("Open SSH");
-            ECContext.Items.Add("Open SCP");
+            MenuItem SSH = new MenuItem();
+            SSH.Click += new RoutedEventHandler(SSH_Click);
+            SSH.Header = "Open SSH";
+
+            MenuItem SCP = new MenuItem();
+            SCP.Click += new RoutedEventHandler(SCP_Click);
+            SCP.Header = "Open SCP";
+
+            ECContext.Items.Add(SSH);
+            ECContext.Items.Add(SCP);
         }
 
         private ContextMenu ECContext = new ContextMenu();
 
+        private void ECContext_MouseUp(object sender, MouseEventArgs e)
+        {
+            // Load context menu on right mouse click
+            
+           
+           // if (e.MouseDevice. == MouseButton.Right)
+            {
+             //   hitTestInfo = dataGridView.HitTest(e.X, e.Y);
+                // If column is first column
+             //   if (hitTestInfo.Type == DataGridViewHitTestType.Cell && hitTestInfo.ColumnIndex == 0)
+              //      contextMenuForColumn1.Show(dataGridView, new Point(e.X, e.Y));
+             // /  // If column is second column
+             //   if (hitTestInfo.Type == DataGridViewHitTestType.Cell && hitTestInfo.ColumnIndex == 1)
+              //      contextMenuForColumn2.Show(dataGridView, new Point(e.X, e.Y));
+            }
+        }
 
 
+        private void SSH_Click(object sender, EventArgs e)
+        {
+            string action = "SSH";
 
+            
+        }
 
+        private void SCP_Click(object sender, EventArgs e)
+        {
+            string action = "SCP";
+        }
+
+        private void ProcessContent(string action, string ipaddress)
+        {
+
+        }
     }
 }
