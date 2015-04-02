@@ -53,11 +53,19 @@ namespace AWSMonitor
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             var Profiles = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase);
 
-            ProfilesComboBox.Items.Add("_All_");
-            RegionsCombobox.Items.Add("_All_");
+            ProfilesComboBox.Items.Add("All Profiles");
+            RegionsCombobox.Items.Add("All Regions");
             foreach(string aProfile in Profiles)
             {
                 ProfilesComboBox.Items.Add(aProfile);
+                System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
+                mi.IsCheckable = true;
+                //mi.Name = aProfile;
+                mi.Header = aProfile;
+                mi.IsChecked = true;
+                mi.StaysOpenOnClick = true;
+                System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[1];
+                Proot.Items.Add(mi);
             }
 
             var Regions = RegionEndpoint.EnumerableAllRegions;
@@ -67,6 +75,18 @@ namespace AWSMonitor
                 if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
                 if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
                 RegionsCombobox.Items.Add(aregion.DisplayName);
+
+                System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
+                mi.IsCheckable = true;
+                //mi.Name = aProfile;
+                mi.Header = aregion;
+                mi.IsChecked = true;
+                mi.StaysOpenOnClick = true;
+                System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[2];
+                Proot.Items.Add(mi);
+
+
+
             }
             ProfilesComboBox.SelectedIndex = 0;
             RegionsCombobox.SelectedIndex = 0;
@@ -144,13 +164,13 @@ namespace AWSMonitor
             var prof2process = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase).ToList();
             var regions2process = Amazon.RegionEndpoint.EnumerableAllRegions.ToList();
             //override complete list with one profile.
-            if(!ProfilesComboBox.SelectedValue.Equals("_All_"))
+            if(!ProfilesComboBox.SelectedValue.Equals("All Profiles"))
             {
                 prof2process.Clear();
                 prof2process.Add(ProfilesComboBox.SelectedValue.ToString());
             }
 
-            if(!RegionsCombobox.SelectedValue.Equals("_All_"))
+            if(!RegionsCombobox.SelectedValue.Equals("All Regions"))
             {
                 regions2process.Clear();
                 foreach(var iregion in Amazon.RegionEndpoint.EnumerableAllRegions)
@@ -183,7 +203,7 @@ namespace AWSMonitor
                     if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
                     if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
                     region = aregion;
-                    ProcessingLabel.Content = "Pro:" + aprofile + "    Reg: " + region;
+                    ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region ;
                     Dispatcher.Invoke(updatePbDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { System.Windows.Controls.ProgressBar.ValueProperty, value });
                     //Try to get scheduled events on my Profile/aregion
                     var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
@@ -208,7 +228,7 @@ namespace AWSMonitor
                         //Collect the datases
                         string instanceid = instat.InstanceId;
                         string instancename = "";
-                        ProcessingLabel.Content = "Pro:" + aprofile + "    Reg: " + region + "   Ins: " + instanceid;
+                        ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region + "   Instance: " + instanceid;
                         //How do we get the tag keys for an instance??? Argh!
                         var status = instat.Status.Status;
                         string AZ = instat.AvailabilityZone;
@@ -238,7 +258,6 @@ namespace AWSMonitor
                             if (atag.Key.Equals("Name"))
                             {
                                 instancename = atag.Value;
-                                continue;
                             }
                             if(!TagFilterCombo.Items.Contains(atag.Key))
                             {
@@ -288,8 +307,7 @@ namespace AWSMonitor
             RawResults = MyDataTable;
             DaGrid.ItemsSource = MyDataTable.AsDataView();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
-            ProcessingLabel.Content = "Done Processing";
-            CountLabel.Content = "Results Displayed: " + RawResults.Rows.Count;
+            ProcessingLabel.Content  = "Results Displayed: " + RawResults.Rows.Count;
             System.Windows.Controls.ContextMenu Contextor = new System.Windows.Controls.ContextMenu();
             
             
@@ -327,7 +345,7 @@ namespace AWSMonitor
 
                 }
                 DaGrid.ItemsSource = newdt.AsDataView();
-                CountLabel.Content = "Results Displayed: "+ newdt.Rows.Count;
+                ProcessingLabel.Content = "Results Displayed: "+ newdt.Rows.Count;
 
             }
 
@@ -467,6 +485,40 @@ namespace AWSMonitor
                 "&currency_code=" + currency +
                 "&bn=" + "PP%2dDonationsBF";
             System.Diagnostics.Process.Start(PayPalURL);
+        }
+
+        private void CKAllPMI_Click(object sender, RoutedEventArgs e)
+        {
+            //Checks all Profilemenu items
+            foreach (System.Windows.Controls.MenuItem anitem in ProfilesMI.Items)
+            {
+                if (anitem.IsCheckable) anitem.IsChecked = true;
+            }
+        }
+
+        private void UCKAllPMI_Click(object sender, RoutedEventArgs e)
+        {
+            //Checks all Profilemenu items
+            foreach (System.Windows.Controls.MenuItem anitem in ProfilesMI.Items)
+            {
+                if (anitem.IsCheckable) anitem.IsChecked = false;
+            }
+        }
+
+        private void CkAllRMI_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (System.Windows.Controls.MenuItem anitem in RegionMI.Items)
+            {
+                if (anitem.IsCheckable) anitem.IsChecked = true;
+            }
+        }
+
+        private void UCkAllRMI_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (System.Windows.Controls.MenuItem anitem in RegionMI.Items)
+            {
+                if (anitem.IsCheckable) anitem.IsChecked = false;
+            }
         }
     }
 }
