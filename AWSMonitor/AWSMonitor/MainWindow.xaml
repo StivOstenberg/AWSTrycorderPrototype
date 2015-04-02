@@ -8,10 +8,10 @@
             <ColumnDefinition Width="619*"/>
             <ColumnDefinition Width="326*"/>
         </Grid.ColumnDefinitions>
-        <ComboBox x:Name="ProfilesComboBox" HorizontalAlignment="Left" Margin="1,27,0,0" VerticalAlignment="Top" Width="188" Height="22" Grid.Column="1"/>
-        <Label Content="Profiles" HorizontalAlignment="Left" Margin="9,0,0,0" VerticalAlignment="Top" Height="26" Width="50" Grid.Column="1"/>
-        <ComboBox x:Name="RegionsCombobox" Margin="213,27,0,0" VerticalAlignment="Top" Grid.Column="1" Height="22" HorizontalAlignment="Left" Width="153"/>
-        <Label Content="Regions" HorizontalAlignment="Left" Margin="213,1,0,0" VerticalAlignment="Top" Grid.Column="1" Height="26" Width="52" RenderTransformOrigin="3.545,0.611"/>
+        <ComboBox x:Name="ProfilesComboBox" HorizontalAlignment="Left" Margin="0,36,0,0" VerticalAlignment="Top" Width="188" Height="22" Grid.Column="1"/>
+        <Label Content="Profiles" HorizontalAlignment="Left" Margin="10,18,0,0" VerticalAlignment="Top" Height="26" Width="50" Grid.Column="1"/>
+        <ComboBox x:Name="RegionsCombobox" Margin="213,36,0,0" VerticalAlignment="Top" Grid.Column="1" Height="22" HorizontalAlignment="Left" Width="153"/>
+        <Label Content="Regions" HorizontalAlignment="Left" Margin="213,18,0,0" VerticalAlignment="Top" Grid.Column="1" Height="26" Width="52" RenderTransformOrigin="3.545,0.611"/>
         <Button x:Name="EC2EventScanButton" Content="Scan" HorizontalAlignment="Right" Margin="0,5,29.6,0" Width="53" Height="22" VerticalAlignment="Top" Click="EC2EventScanButton_Click" Grid.Column="2" ToolTip="Scan EC2 Instances"/>
         <DataGrid x:Name="DaGrid" Margin="1,63,10.6,68.8" Grid.ColumnSpan="2" Grid.Column="1" Loaded="DaGrid_Loaded" >
             <DataGrid.ItemBindingGroup>
@@ -19,19 +19,19 @@
             </DataGrid.ItemBindingGroup>
         </DataGrid>
         <ProgressBar x:Name="ProgressBar1" HorizontalAlignment="Right" Margin="0,36,129.6,0" Width="121" Height="22" VerticalAlignment="Top" Grid.Column="2"/>
-        <Label x:Name="ProcessingLabel" Content="." HorizontalAlignment="Left" Margin="319,3,0,0" Width="530" Grid.ColumnSpan="2" Height="26" VerticalAlignment="Top" Grid.Column="1"/>
+        <Label x:Name="ProcessingLabel" Content="." HorizontalAlignment="Left" Margin="319,18,0,0" Width="530" Grid.ColumnSpan="2" Height="26" VerticalAlignment="Top" Grid.Column="1"/>
         <ComboBox x:Name="TagFilterCombo" Grid.Column="2" Margin="0,0,96.6,37.8" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="120" Height="22" SelectionChanged="TagFilterCombo_SelectionChanged"/>
         <Label x:Name="TagFilterLabel" Content="Tags" Margin="0,0,240.6,35.8" VerticalAlignment="Bottom" Grid.Column="2" Height="26" HorizontalAlignment="Right" Width="59"/>
         <Button x:Name="DoFilterButton" Content="Go" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,29.6,9.8" VerticalAlignment="Bottom" Width="26" ToolTip="Apply Filter" Click="DoFilterButton_Click" Height="22"/>
         <Button x:Name="ClearFilters" Content="Clr" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,29.6,39.8" VerticalAlignment="Bottom" Width="26" ToolTip="Remove applied filters" IsEnabled="True" Height="22" Click="ClearFilters_Click"/>
         <TextBox x:Name="FilterTagText" Grid.Column="2" HorizontalAlignment="Right" Height="23" Margin="0,0,96.6,9.8" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="120"/>
         <Label Content="Filter" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,262.6,7.8" VerticalAlignment="Bottom" RenderTransformOrigin="0.427,-0.252" Height="26" Width="37"/>
-        <Label x:Name="CountLabel" Content="#######" HorizontalAlignment="Left" Margin="481,27,0,0" Width="138" VerticalAlignment="Top" RenderTransformOrigin="0.86,0.311" Height="20" Grid.Column="1"/>
-        <DataGrid Grid.ColumnSpan="2" HorizontalAlignment="Left" Margin="526,267,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="CountLabel" Content="#######" HorizontalAlignment="Left" Margin="481,38,0,0" Width="138" VerticalAlignment="Top" RenderTransformOrigin="0.86,0.311" Height="20" Grid.Column="1"/>
         <Button x:Name="FileCopyButton" Grid.ColumnSpan="2" Content="CopyFile" HorizontalAlignment="Left" Margin="526,0,0,6.8" VerticalAlignment="Bottom" Width="75" Click="FileCopyButton_Click"/>
         <TextBox x:Name="LocalFileTextbox" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="23" Margin="23,0,0,38.8" TextWrapping="Wrap" Text="c:\" VerticalAlignment="Bottom" Width="515"/>
-        <TextBox x:Name="CopytoTextbox" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="23" Margin="23,0,0,10.8" TextWrapping="Wrap" Text="\tmp" VerticalAlignment="Bottom" Width="471"/>
+        <TextBox x:Name="EC2dirtoCopytoTextbox" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="23" Margin="23,0,0,10.8" TextWrapping="Wrap" Text="/tmp/" VerticalAlignment="Bottom" Width="471"/>
         <Button x:Name="FilepickerButton" Grid.ColumnSpan="2" Content="..." HorizontalAlignment="Left" Margin="565,0,0,37.8" Width="28" RenderTransformOrigin="0.054,-0.003" Height="22" VerticalAlignment="Bottom" Click="FilepickerButton_Click"/>
+        <Label Grid.ColumnSpan="2" Content="/" HorizontalAlignment="Left" Margin="1,0,0,2.8" VerticalAlignment="Bottom" Width="17"/>
 
     </Grid>
 </Window>

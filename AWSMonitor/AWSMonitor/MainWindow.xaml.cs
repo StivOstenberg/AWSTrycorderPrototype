@@ -390,71 +390,83 @@ namespace AWSMonitor
 
         private void FileCopyButton_Click(object sender, RoutedEventArgs e)
         {
-
+            foreach(DataRowView belch in DaGrid.ItemsSource)
+            {
+                var rabbit = belch.Row.Field<string>("Pub DNS");
+                var result = SFTPFileCopy(rabbit, "ec2-user", LocalFileTextbox.Text, EC2dirtoCopytoTextbox.Text);
+            }
         }
 
-        public bool CopyFile(string host, string user, string pass, string sfile, string ddir)
+
+/// <summary>
+/// SFTPCopy
+/// </summary>
+/// <param name="hostname">Name of host to connect to</param>
+/// <param name="username">Username</param>
+/// <param name="lfile">Local file to be copied</param>
+/// <param name="ec2dir">Remote Directory to copy file to</param>
+/// <returns></returns>
+        public string  SFTPFileCopy(string hostname, string username, string lfile, string ec2dir)
         {
-            const string logname = "log.xml";
-
-            // Run hidden WinSCP process
-            Process winscp = new Process();
-            winscp.StartInfo.FileName = "winscp.com";
-            winscp.StartInfo.Arguments = "/xmllog=\"" + logname + "\"";
-            winscp.StartInfo.UseShellExecute = false;
-            winscp.StartInfo.RedirectStandardInput = true;
-            winscp.StartInfo.RedirectStandardOutput = true;
-            winscp.StartInfo.CreateNoWindow = true;
-            winscp.StartInfo.UserName = user;
-            
-            winscp.Start();
-
-            // Feed in the scripting commands
-            
-            winscp.StandardInput.WriteLine("option batch abort");
-            winscp.StandardInput.WriteLine("option confirm off");
-            winscp.StandardInput.WriteLine("open mysession");
-            winscp.StandardInput.WriteLine("cd " + ddir);
-            //winscp.StandardInput.WriteLine("put " + sfile);
-            winscp.StandardInput.Close();
-
-            // Collect all output (not used in this example)
-            string output = winscp.StandardOutput.ReadToEnd();
-
-            // Wait until WinSCP finishes
-            winscp.WaitForExit();
-
-            // Parse and interpret the XML log
-            // (Note that in case of fatal failure the log file may not exist at all)
-            XPathDocument log = new XPathDocument(logname);
-            XmlNamespaceManager ns = new XmlNamespaceManager(new NameTable());
-            ns.AddNamespace("w", "http://winscp.net/schema/session/1.0");
-            XPathNavigator nav = log.CreateNavigator();
-
-            // Success (0) or error?
-            if (winscp.ExitCode != 0)
+            string toreturn = "";
+            try
             {
-                Console.WriteLine("Error occured");
 
-                // See if there are any messages associated with the error
-                foreach (XPathNavigator message in nav.Select("//w:message", ns))
+                // Setup session options
+                SessionOptions sessionOptions = new SessionOptions
                 {
-                    Console.WriteLine(message.Value);
+                    Protocol = Protocol.Sftp,
+                    HostName = hostname,
+                    UserName = username,
+ //                   Password = password,
+  //                  SshHostKeyFingerprint = "ssh-rsa 2048 xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+                };
+
+                sessionOptions.GiveUpSecurityAndAcceptAnySshHostKey = true;// Since we are pulling these names from AWS, assume they are OK. Avoid prompt.
+
+                using (Session session = new Session())
+                {
+                    // Connect
+                    session.Open(sessionOptions);
+
+                    // Upload files
+                    TransferOptions transferOptions = new TransferOptions();
+                    transferOptions.TransferMode = TransferMode.Binary;
+
+                    TransferOperationResult transferResult;
+                    transferResult = session.PutFiles(lfile, ec2dir, false, transferOptions);
+
+                    // Throw on any error
+                    transferResult.Check();
+
+                    // Print results
+                    foreach (TransferEventArgs transfer in transferResult.Transfers)
+                    {
+                        toreturn += "\n Upload of " + transfer.FileName + " succeeded"; 
+
+                    }
                 }
+
+                return toreturn;
             }
-            else
+            catch (Exception e)
             {
-                // It can be worth looking for directory listing even in case of
-                // error as possibly only upload may fail
-
-                XPathNodeIterator files = nav.Select("//w:file", ns);
-                Console.WriteLine(string.Format("There are {0} files and subdirectories:", files.Count));
-                foreach (XPathNavigator file in files)
-                {
-                    Console.WriteLine(file.SelectSingleNode("w:filename/@value", ns).Value);
-                }
+                toreturn += "\nError: " + e;
+                return toreturn;
             }
-            return false;
+        }
+
+        public void PayPalDonate(string youremail, string description, string country, string currency)
+        {
+            string PayPalURL = "";
+            PayPalURL += "https://www.paypal.com/cgi-bin/webscr" +
+                "?cmd=" + "_donations" +
+                "&business=" + youremail +
+                "&lc=" + country +
+                "&item_name=" + description +
+                "&currency_code=" + currency +
+                "&bn=" + "PP%2dDonationsBF";
+            System.Diagnostics.Process.Start(PayPalURL);
         }
     }
 }
