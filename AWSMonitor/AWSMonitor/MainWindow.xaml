@@ -41,8 +41,6 @@
                 <MenuItem x:Name="UCkAllRMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCkAllRMI_Click"/>
 
             </MenuItem>
-            <ComboBox x:Name="ProfilesComboBox" HorizontalAlignment="Left" VerticalAlignment="Top" Width="188" Height="22"/>
-            <ComboBox x:Name="RegionsCombobox" VerticalAlignment="Top" Height="22" HorizontalAlignment="Left" Width="153"/>
             <MenuItem x:Name="About_Menu_Item" Header="About"/>
         </Menu>
 

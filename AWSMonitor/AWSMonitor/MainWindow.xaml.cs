@@ -53,11 +53,10 @@ namespace AWSMonitor
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             var Profiles = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase);
 
-            ProfilesComboBox.Items.Add("All Profiles");
-            RegionsCombobox.Items.Add("All Regions");
+
             foreach(string aProfile in Profiles)
             {
-                ProfilesComboBox.Items.Add(aProfile);
+
                 System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
                 mi.IsCheckable = true;
                 //mi.Name = aProfile;
@@ -74,7 +73,7 @@ namespace AWSMonitor
                 //Skip Beijing and USGov
                 if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
                 if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
-                RegionsCombobox.Items.Add(aregion.DisplayName);
+
 
                 System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
                 mi.IsCheckable = true;
@@ -88,8 +87,7 @@ namespace AWSMonitor
 
 
             }
-            ProfilesComboBox.SelectedIndex = 0;
-            RegionsCombobox.SelectedIndex = 0;
+
         }
 
         private delegate void UpdateProgressBarDelegate(System.Windows.DependencyProperty dp, Object value);
@@ -163,24 +161,36 @@ namespace AWSMonitor
 
             var prof2process = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase).ToList();
             var regions2process = Amazon.RegionEndpoint.EnumerableAllRegions.ToList();
+            regions2process.Clear();
+            prof2process.Clear();
+            var regionsavailable = Amazon.RegionEndpoint.EnumerableAllRegions.ToList();
             //override complete list with one profile.
-            if(!ProfilesComboBox.SelectedValue.Equals("All Profiles"))
+
+            //Build Profile List
+            foreach (System.Windows.Controls.MenuItem anitem in ProfilesMI.Items)
             {
-                prof2process.Clear();
-                prof2process.Add(ProfilesComboBox.SelectedValue.ToString());
+                if (anitem.IsChecked) prof2process.Add(anitem.Header.ToString());
             }
 
-            if(!RegionsCombobox.SelectedValue.Equals("All Regions"))
+
+            //Build Region List
+            foreach (System.Windows.Controls.MenuItem anitem in RegionMI.Items)
             {
-                regions2process.Clear();
-                foreach(var iregion in Amazon.RegionEndpoint.EnumerableAllRegions)
+                if (anitem.IsChecked)
                 {
-                    if(iregion.DisplayName.Equals(RegionsCombobox.SelectedValue.ToString()))
+                    //Lookup the endpoint using the region name
+                    foreach (var ar in regionsavailable)
                     {
-                        regions2process.Add(iregion);
+                        var av = ar.DisplayName;
+                        var me = anitem.Header;
+                     
+                        if (anitem.Header.ToString().Contains(ar.DisplayName.ToString())) regions2process.Add(ar);
                     }
                 }
             }
+
+
+
 
             //Configure the ProgressBar
             ProgressBar1.Minimum = 0;
@@ -359,6 +369,7 @@ namespace AWSMonitor
         private void ClearFilters_Click(object sender, RoutedEventArgs e)
         {
             DaGrid.ItemsSource = RawResults.AsDataView();
+            ProcessingLabel.Content = "Results Displayed: " + DaGrid.Items.Count;
         }
 
         private void DaGrid_Loaded(object sender, RoutedEventArgs e)
