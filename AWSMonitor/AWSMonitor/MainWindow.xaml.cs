@@ -52,7 +52,8 @@ namespace AWSMonitor
             InitializeComponent();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             var Profiles = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase);
-
+            this.ShowInTaskbar = true;
+            this.Topmost = false;
 
             foreach(string aProfile in Profiles)
             {
@@ -419,10 +420,20 @@ namespace AWSMonitor
 
         private void FileCopyButton_Click(object sender, RoutedEventArgs e)
         {
+            var finalresult = "";
             foreach(DataRowView belch in DaGrid.ItemsSource)
             {
                 var rabbit = belch.Row.Field<string>("Pub DNS");
-                var result = SFTPFileCopy(rabbit, "ec2-user", LocalFileTextbox.Text, EC2dirtoCopytoTextbox.Text);
+                try
+                {
+                    var result = SFTPFileCopy(rabbit, "ec2-user", LocalFileTextbox.Text, EC2dirtoCopytoTextbox.Text);
+                    finalresult += "/n" + result;
+                }
+                catch
+                {
+                    finalresult += "/n Failed copy to " + rabbit;
+                }
+                System.Windows.Forms.MessageBox.Show(finalresult);
             }
         }
 
@@ -471,7 +482,7 @@ namespace AWSMonitor
                     // Print results
                     foreach (TransferEventArgs transfer in transferResult.Transfers)
                     {
-                        toreturn += "\n Upload of " + transfer.FileName + " succeeded"; 
+                        toreturn += "\n Upload to " + hostname + " succeeded"; 
 
                     }
                 }
@@ -480,7 +491,7 @@ namespace AWSMonitor
             }
             catch (Exception e)
             {
-                toreturn += "\nError: " + e;
+                toreturn += "/nFailed copy to: " + hostname + ". Is key loaded in Pageant?";
                 return toreturn;
             }
         }
