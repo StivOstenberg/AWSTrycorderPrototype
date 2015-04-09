@@ -319,7 +319,7 @@ namespace AWSMonitor
             DaGrid.ItemsSource = MyDataTable.AsDataView();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             ProcessingLabel.Content  = "Results Displayed: " + RawResults.Rows.Count;
-            System.Windows.Controls.ContextMenu Contextor = new System.Windows.Controls.ContextMenu();
+
             
             
         }
@@ -380,11 +380,11 @@ namespace AWSMonitor
             DaGrid.ContextMenu = ECContext;
             System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
             SSH.Click += new RoutedEventHandler(SSH_Click);
-            SSH.Header = "Open SSH";
+            SSH.Header = "dOpen SSH";
 
             System.Windows.Controls.MenuItem SCP = new System.Windows.Controls.MenuItem();
             SCP.Click += new RoutedEventHandler(SCP_Click);
-            SCP.Header = "Open SCP";
+            SCP.Header = "dOpen SCP";
             
 
             ECContext.Items.Add(SSH);
@@ -540,6 +540,43 @@ namespace AWSMonitor
             foreach (System.Windows.Controls.MenuItem anitem in RegionMI.Items)
             {
                 if (anitem.IsCheckable) anitem.IsChecked = false;
+            }
+        }
+
+        private void DaGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var cecil = DaGrid.SelectedItems.Count;
+            ECContext.Items.Clear();
+            if (cecil > 1)
+            {
+                System.Windows.Controls.MenuItem MS = new System.Windows.Controls.MenuItem();
+                MS.Header = "Multiselected Options";
+                ECContext.Items.Add(MS);
+            }
+            else if(DaGrid.SelectedItems.Count.Equals(1))
+            {
+                var rabbit = DaGrid.SelectedItem;// Get the datarowview
+                DataRowView bunny = (DataRowView)rabbit;
+                var hare = bunny.Row;
+                var coney = hare["Pub IP"];
+
+                //Build context Menu
+                System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
+                SSH.Click += new RoutedEventHandler(SSH_Click);
+                SSH.Header = "Open SSH to " + coney;
+                
+                System.Windows.Controls.MenuItem SCP = new System.Windows.Controls.MenuItem();
+                SCP.Click += new RoutedEventHandler(SCP_Click);
+                SCP.Header = "Open SCP to " + coney;
+
+                ECContext.Items.Add(SSH);
+                ECContext.Items.Add(SCP);
+            }
+            else
+            {
+                System.Windows.Controls.MenuItem NS = new System.Windows.Controls.MenuItem();
+                NS.Header = "No selected rows";
+                ECContext.Items.Add(NS);
             }
         }
     }

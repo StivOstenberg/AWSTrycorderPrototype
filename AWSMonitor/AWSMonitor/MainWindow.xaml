@@ -9,7 +9,7 @@
             <ColumnDefinition Width="326*"/>
         </Grid.ColumnDefinitions>
         <Button x:Name="EC2EventScanButton" Content="Scan" HorizontalAlignment="Right" Margin="0,34,29.6,0" Width="53" Height="22" VerticalAlignment="Top" Click="EC2EventScanButton_Click" Grid.Column="2" ToolTip="Scan EC2 Instances"/>
-        <DataGrid x:Name="DaGrid" Margin="1,63,10.6,68.8" Grid.ColumnSpan="2" Grid.Column="1" Loaded="DaGrid_Loaded" >
+        <DataGrid x:Name="DaGrid" Margin="1,63,10.6,68.8" Grid.ColumnSpan="2" Grid.Column="1" Loaded="DaGrid_Loaded" MouseRightButtonDown="DaGrid_MouseRightButtonDown" >
             <DataGrid.ItemBindingGroup>
                 <BindingGroup/>
             </DataGrid.ItemBindingGroup>
