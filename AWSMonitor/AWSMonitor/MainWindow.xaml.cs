@@ -153,8 +153,7 @@ namespace AWSMonitor
 
 
 
-            //Stores the value of the ProgressBar
-            double value = 0;
+
 
             //Create a new instance of our ProgressBar Delegate that points
             // to the ProgressBar's SetValue method.
@@ -202,119 +201,30 @@ namespace AWSMonitor
             // Start the loops.  For each Profile, iterate through all regions.
             //Foreach Profile(credential) set aprofile
 
-            
-            foreach (var aprofile in prof2process)
+            //Trying to parallelize this.
+            // Establish QUEUE for threads to report back on
+            Queue<DataTable> ProfileResults = new Queue<DataTable>();
+             foreach (var aprofile in prof2process)
             {
-                Amazon.Runtime.AWSCredentials credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
-
-                //Foreach aregion
-                foreach (var aregion in regions2process)
-                {
-                    //Skip GovCloud and Beijing. They require special handling and I dont need em.
-                    if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
-                    if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
-                    region = aregion;
-                    ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region ;
-                    Dispatcher.Invoke(updatePbDelegate, System.Windows.Threading.DispatcherPriority.Background, new object[] { System.Windows.Controls.ProgressBar.ValueProperty, value });
-                    //Try to get scheduled events on my Profile/aregion
-                    var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
-                    var request = new DescribeInstanceStatusRequest();
+                //Call the ScanProfile function to fill queue
+                var arequest = new ScanRequest();
+                arequest.Profile = aprofile;
+                arequest.Regions = regions2process;
+                arequest.ResultQueue = ProfileResults;
 
 
-                    var instatresponse = ec2.DescribeInstanceStatus(request);
-
-
-                    var indatarequest = new DescribeInstancesRequest();
-                        foreach (var instat in instatresponse.InstanceStatuses)
-                    {
-                        indatarequest.InstanceIds.Add(instat.InstanceId);
-                    }
-                    DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
-
-
-                    int count = instatresponse.InstanceStatuses.Count();
-
-                    foreach (var instat in instatresponse.InstanceStatuses)
-                    {
-                        //Collect the datases
-                        string instanceid = instat.InstanceId;
-                        string instancename = "";
-                        ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region + "   Instance: " + instanceid;
-                        //How do we get the tag keys for an instance??? Argh!
-                        var status = instat.Status.Status;
-                        string AZ = instat.AvailabilityZone;
-                        string profile = aprofile;
-                        string myregion = region.DisplayName + "  -  " + region.SystemName;
-                        int eventnumber = instat.Events.Count();
-                        string eventlist = "";
-                        var urtburgle = DescResult.Reservations;
-
-                        string tags = ""; // Holds the list of tags to print out.
-
-                        var loadtags = (from t in DescResult.Reservations
-                                       where t.Instances[0].InstanceId.Equals(instanceid)
-                                       select t.Instances[0].Tags).AsEnumerable();
-
-                        Dictionary<string,string> taglist = new Dictionary<string,string>();
-                        foreach(var rekey in loadtags)
-                        {
-                           foreach(var kvp in rekey)
-                           {
-                               taglist.Add(kvp.Key, kvp.Value);
-                           }
-                        }
-
-                        foreach(var atag in taglist)
-                        {
-                            if (atag.Key.Equals("Name"))
-                            {
-                                instancename = atag.Value;
-                            }
-                            if(!TagFilterCombo.Items.Contains(atag.Key))
-                            {
-                                TagFilterCombo.Items.Add(atag.Key);
-                            }
-                            if (tags.Length > 1)
-                            {
-                                tags += "\n" + atag.Key + ":" + atag.Value ;
-                            }
-                            else
-                            {
-                                tags += atag.Key + ":" + atag.Value ;
-                            }
-                        }
-
-                        if (eventnumber > 0)
-                        {
-                            foreach (var anevent in instat.Events)
-                            {
-                                eventlist += anevent.Description + "\n";
-                            }
-                        }
-
-                        //Need more info for SSH and SCP...
-
-
-                        var publicIP = (from t in urtburgle
-                                      where t.Instances[0].InstanceId.Equals(instanceid)
-                                      select t.Instances[0].PublicIpAddress).FirstOrDefault();
-
-                        var publicDNS = (from t in urtburgle
-                                     where t.Instances[0].InstanceId.Equals(instanceid)
-                                     select t.Instances[0].PublicDnsName).FirstOrDefault();
-
-                        //Add to table
-
-
-                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags, publicIP, publicDNS);
-
-                    }
-                    value++;
-                }
-                
-   
-
+                ScanProfile(arequest);
             }
+
+
+            while(ProfileResults.Count>0)
+            {
+                var atable = ProfileResults.Dequeue();
+                MyDataTable.Merge(atable);
+            }
+
+            
+
             RawResults = MyDataTable;
             DaGrid.ItemsSource = MyDataTable.AsDataView();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
@@ -579,5 +489,141 @@ namespace AWSMonitor
                 ECContext.Items.Add(NS);
             }
         }
+
+        public bool ScanProfile(ScanRequest Request)
+        {
+            try
+            {
+                var aprofile = Request.Profile;
+                var regions2process = Request.Regions;
+                var SubmitResults = Request.ResultQueue;
+
+                Amazon.Runtime.AWSCredentials credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
+                var MyDataTable = GetEC2StatusTable();
+                //Foreach aregion
+                foreach (var aregion in regions2process)
+                {
+                    //Skip GovCloud and Beijing. They require special handling and I dont need em.
+                    if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
+                    if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
+                    var region = aregion;
+
+
+                    //Try to get scheduled events on my Profile/aregion
+                    var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
+                    var request = new DescribeInstanceStatusRequest();
+
+
+                    var instatresponse = ec2.DescribeInstanceStatus(request);
+
+
+                    var indatarequest = new DescribeInstancesRequest();
+                    foreach (var instat in instatresponse.InstanceStatuses)
+                    {
+                        indatarequest.InstanceIds.Add(instat.InstanceId);
+                    }
+                    DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
+
+
+                    int count = instatresponse.InstanceStatuses.Count();
+
+                    foreach (var instat in instatresponse.InstanceStatuses)
+                    {
+                        //Collect the datases
+                        string instanceid = instat.InstanceId;
+                        string instancename = "";
+                        ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region + "   Instance: " + instanceid;
+                        //How do we get the tag keys for an instance??? Argh!
+                        var status = instat.Status.Status;
+                        string AZ = instat.AvailabilityZone;
+                        string profile = aprofile;
+                        string myregion = region.DisplayName + "  -  " + region.SystemName;
+                        int eventnumber = instat.Events.Count();
+                        string eventlist = "";
+                        var urtburgle = DescResult.Reservations;
+
+                        string tags = ""; // Holds the list of tags to print out.
+
+                        var loadtags = (from t in DescResult.Reservations
+                                        where t.Instances[0].InstanceId.Equals(instanceid)
+                                        select t.Instances[0].Tags).AsEnumerable();
+
+                        Dictionary<string, string> taglist = new Dictionary<string, string>();
+                        foreach (var rekey in loadtags)
+                        {
+                            foreach (var kvp in rekey)
+                            {
+                                taglist.Add(kvp.Key, kvp.Value);
+                            }
+                        }
+
+                        foreach (var atag in taglist)
+                        {
+                            if (atag.Key.Equals("Name"))
+                            {
+                                instancename = atag.Value;
+                            }
+                            if (!TagFilterCombo.Items.Contains(atag.Key))
+                            {
+                                TagFilterCombo.Items.Add(atag.Key);
+                            }
+                            if (tags.Length > 1)
+                            {
+                                tags += "\n" + atag.Key + ":" + atag.Value;
+                            }
+                            else
+                            {
+                                tags += atag.Key + ":" + atag.Value;
+                            }
+                        }
+
+                        if (eventnumber > 0)
+                        {
+                            foreach (var anevent in instat.Events)
+                            {
+                                eventlist += anevent.Description + "\n";
+                            }
+                        }
+
+                        //Need more info for SSH and SCP...
+
+
+                        var publicIP = (from t in urtburgle
+                                        where t.Instances[0].InstanceId.Equals(instanceid)
+                                        select t.Instances[0].PublicIpAddress).FirstOrDefault();
+
+                        var publicDNS = (from t in urtburgle
+                                         where t.Instances[0].InstanceId.Equals(instanceid)
+                                         select t.Instances[0].PublicDnsName).FirstOrDefault();
+
+                        //Add to table
+
+
+                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags, publicIP, publicDNS);
+
+                    }
+
+                }
+
+
+                SubmitResults.Enqueue(MyDataTable);
+                return true;
+            }
+            catch(Exception ex)
+            {
+                //Will figure out what to do with this later.
+                var anerror = ex;
+                return false; 
+            }
+
+        }
+
+    }
+
+    public class ScanRequest
+    {
+        public string Profile { get; set; }
+        public List<Amazon.RegionEndpoint> Regions { get; set; }
+        public Queue<DataTable> ResultQueue { get; set; }
     }
 }
