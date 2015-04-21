@@ -151,7 +151,7 @@ namespace AWSMonitor
         private void EC2EventScanButton_Click(object sender, RoutedEventArgs e)
         {
             Process();
-            ShowHideColumns();
+            DoFilter();
         }
 
         private void Process()
@@ -258,9 +258,13 @@ namespace AWSMonitor
 
         private void DoFilterButton_Click(object sender, RoutedEventArgs e)
         {
+            DoFilter();
+        }
+        private void DoFilter()
+        {
             var newtable = RawResults.Copy();
             string fxp = ""; // The string what will build our query.
-            if (FilterTagText.Equals("")) return;
+            if (FilterTagText.Text.Equals("")) return;
 
             if (fxp.Length > 2) fxp += " and ";
             else
@@ -270,7 +274,7 @@ namespace AWSMonitor
                              select record;
                 var newdt = GetEC2StatusTable();
                 int count = newbie.Count();
-                foreach(var element in newbie)
+                foreach (var element in newbie)
                 {
                     var row = newdt.NewRow();
                     row = element;
@@ -278,14 +282,8 @@ namespace AWSMonitor
 
                 }
                 DaGrid.ItemsSource = newdt.AsDataView();
-                ProcessingLabel.Content = "Results Displayed: "+ newdt.Rows.Count;
-
+                ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count;
             }
-
-
-
-
-
             ShowHideColumns();
         }
 
@@ -670,6 +668,7 @@ namespace AWSMonitor
                 if (getcheckedstatus) anitem.Visibility = System.Windows.Visibility.Visible;
                 else anitem.Visibility = System.Windows.Visibility.Hidden;
             }
+            
         }
     }
 
