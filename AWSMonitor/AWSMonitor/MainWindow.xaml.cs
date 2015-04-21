@@ -345,14 +345,15 @@ namespace AWSMonitor
                 try
                 {
                     var result = SFTPFileCopy(rabbit, "ec2-user", LocalFileTextbox.Text, EC2dirtoCopytoTextbox.Text);
-                    finalresult += "/n" + result;
+                    finalresult += "\n" + result;
                 }
                 catch
                 {
-                    finalresult += "/n Failed copy to " + rabbit;
+                    finalresult += "\n Failed copy to " + rabbit;
                 }
-                System.Windows.Forms.MessageBox.Show(finalresult);
+
             }
+            System.Windows.Forms.MessageBox.Show(finalresult);
         }
 
 
