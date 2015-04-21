@@ -60,7 +60,6 @@ namespace AWSMonitor
 
                 System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
                 mi.IsCheckable = true;
-                //mi.Name = aProfile;
                 mi.Header = aProfile;
                 mi.IsChecked = true;
                 mi.StaysOpenOnClick = true;
@@ -69,7 +68,7 @@ namespace AWSMonitor
             }
 
             var Regions = RegionEndpoint.EnumerableAllRegions;
-            foreach(var aregion in Regions)
+            foreach(var aregion in Regions)  //Build the Region Select Menu
             {
                 //Skip Beijing and USGov
                 if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
@@ -78,15 +77,23 @@ namespace AWSMonitor
 
                 System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
                 mi.IsCheckable = true;
-                //mi.Name = aProfile;
                 mi.Header = aregion;
                 mi.IsChecked = true;
                 mi.StaysOpenOnClick = true;
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[2];
                 Proot.Items.Add(mi);
-
-
-
+            }
+            foreach(var acolumn in GetEC2StatusTable().Columns) //Set the Column Show Hide menu up
+            {
+                System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
+                mi.IsCheckable = true;
+                mi.Header = acolumn.ToString();
+                mi.IsChecked = true;
+                mi.StaysOpenOnClick = true;
+                mi.Click += ColumnsClick;
+                mi.Checked += ColumnsClick;
+                System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[3];
+                Proot.Items.Add(mi);
             }
 
         }
@@ -95,7 +102,7 @@ namespace AWSMonitor
 
         static DataTable GetEC2StatusTable()
         {
-            // Here we create a DataTable with four columns.
+            // Here we create a DataTable .
             DataTable table = new DataTable();
             table.Columns.Add("Profile", typeof(string));
             table.Columns.Add("Region", typeof(string));
@@ -108,7 +115,8 @@ namespace AWSMonitor
             table.Columns.Add("Tags", typeof(string));
             table.Columns.Add("Pub IP", typeof(string));
             table.Columns.Add("Pub DNS", typeof(string));
-
+            table.Columns.Add("State", typeof(string));
+            table.Columns.Add("Type", typeof(string));
             return table;
         }
 
@@ -127,6 +135,9 @@ namespace AWSMonitor
             public string Tags { get; set; }
             public string PubIP { get; set; }
             public string PubDNS { get; set; }
+            public string State { get; set; }
+
+            public string Type { get; set; }
 
         }
 
@@ -140,6 +151,7 @@ namespace AWSMonitor
         private void EC2EventScanButton_Click(object sender, RoutedEventArgs e)
         {
             Process();
+            ShowHideColumns();
         }
 
         private void Process()
@@ -212,8 +224,8 @@ namespace AWSMonitor
                 arequest.Regions = regions2process;
                 arequest.ResultQueue = ProfileResults;
 
-
-                ScanProfile(arequest);
+                 //How to parallelize this?  
+                 ProfileResults.Enqueue( ScanProfile(arequest));//Currently returns values via the ProfileResults Queue.;
             }
 
 
@@ -274,13 +286,14 @@ namespace AWSMonitor
 
 
 
-
+            ShowHideColumns();
         }
 
         private void ClearFilters_Click(object sender, RoutedEventArgs e)
         {
             DaGrid.ItemsSource = RawResults.AsDataView();
             ProcessingLabel.Content = "Results Displayed: " + DaGrid.Items.Count;
+            ShowHideColumns();
         }
 
         private void DaGrid_Loaded(object sender, RoutedEventArgs e)
@@ -313,15 +326,12 @@ namespace AWSMonitor
         private void SCP_Click(object sender, RoutedEventArgs e)
         {
             string action = "SCP";
-
+            
            
 
         }
 
-        private void ProcessContext(string action, string ipaddress)
-        {
 
-        }
 
         private void FilepickerButton_Click(object sender, RoutedEventArgs e)
         {
@@ -474,13 +484,16 @@ namespace AWSMonitor
                 System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
                 SSH.Click += new RoutedEventHandler(SSH_Click);
                 SSH.Header = "Open SSH to " + coney;
+                SSH.Tag = coney;
                 
                 System.Windows.Controls.MenuItem SCP = new System.Windows.Controls.MenuItem();
                 SCP.Click += new RoutedEventHandler(SCP_Click);
                 SCP.Header = "Open SCP to " + coney;
+                SCP.Tag = coney;
 
                 ECContext.Items.Add(SSH);
                 ECContext.Items.Add(SCP);
+
             }
             else
             {
@@ -490,7 +503,7 @@ namespace AWSMonitor
             }
         }
 
-        public bool ScanProfile(ScanRequest Request)
+        public DataTable ScanProfile(ScanRequest Request)
         {
             try
             {
@@ -536,17 +549,27 @@ namespace AWSMonitor
                         //How do we get the tag keys for an instance??? Argh!
                         var status = instat.Status.Status;
                         string AZ = instat.AvailabilityZone;
+                        var istate = instat.InstanceState.Name;
+                        
                         string profile = aprofile;
                         string myregion = region.DisplayName + "  -  " + region.SystemName;
                         int eventnumber = instat.Events.Count();
+                        
                         string eventlist = "";
                         var urtburgle = DescResult.Reservations;
+
+
 
                         string tags = ""; // Holds the list of tags to print out.
 
                         var loadtags = (from t in DescResult.Reservations
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].Tags).AsEnumerable();
+
+
+
+
+
 
                         Dictionary<string, string> taglist = new Dictionary<string, string>();
                         foreach (var rekey in loadtags)
@@ -596,28 +619,58 @@ namespace AWSMonitor
                                          where t.Instances[0].InstanceId.Equals(instanceid)
                                          select t.Instances[0].PublicDnsName).FirstOrDefault();
 
+                        var iType = (from t in urtburgle
+                                         where t.Instances[0].InstanceId.Equals(instanceid)
+                                         select t.Instances[0].VirtualizationType).FirstOrDefault();
+
+
                         //Add to table
 
 
-                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags, publicIP, publicDNS);
+                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags, publicIP, publicDNS, istate, iType);
 
                     }
 
                 }
 
 
-                SubmitResults.Enqueue(MyDataTable);
-                return true;
+                
+                return MyDataTable;
             }
             catch(Exception ex)
             {
                 //Will figure out what to do with this later.
                 var anerror = ex;
-                return false; 
+                throw ex; 
             }
 
         }
 
+        private void EC2Event_Monitor_Closing(object sender, CancelEventArgs e)
+        {
+            System.Windows.Forms.Application.Exit();
+        }
+
+
+        private void ColumnsClick(object sender, System.EventArgs e)
+        {
+            ShowHideColumns();
+        }
+
+        private void ShowHideColumns()
+        {
+            foreach (var anitem in DaGrid.Columns)
+            {
+                string myheader = (string)anitem.Header;
+                //Check status in Column Menu
+                bool getcheckedstatus = (from System.Windows.Controls.MenuItem t in Columns.Items
+                                        where t.Header.Equals(myheader)
+                                        select t.IsChecked).FirstOrDefault();
+
+                if (getcheckedstatus) anitem.Visibility = System.Windows.Visibility.Visible;
+                else anitem.Visibility = System.Windows.Visibility.Hidden;
+            }
+        }
     }
 
     public class ScanRequest
