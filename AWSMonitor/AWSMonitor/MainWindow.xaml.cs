@@ -38,7 +38,7 @@ namespace AWSMonitor
         public string Filepicker()
         {
             System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
-            ofd.Filter = "Data Sources (*.py, *.sh)|*.py*;*.sh|All Files|*.*"; ;
+            ofd.Filter = "All Files|*.*|Script (*.py, *.sh)|*.py*;*.sh"; ;
             if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
 
