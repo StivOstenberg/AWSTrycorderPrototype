@@ -116,7 +116,9 @@ namespace AWSMonitor
             table.Columns.Add("Pub IP", typeof(string));
             table.Columns.Add("Pub DNS", typeof(string));
             table.Columns.Add("State", typeof(string));
-            table.Columns.Add("Type", typeof(string));
+            table.Columns.Add("vType", typeof(string));
+            table.Columns.Add("iType", typeof(string));
+            table.Columns.Add("SecurityGroups", typeof(string));
             return table;
         }
 
@@ -137,8 +139,11 @@ namespace AWSMonitor
             public string PubDNS { get; set; }
             public string State { get; set; }
 
-            public string Type { get; set; }
+            public string vType { get; set; }
 
+            public string iType { get; set; }
+
+            public string SecurityGroups { get; set; }
         }
 
         private List<EC2Instance>  LoadEC2Data()
@@ -472,28 +477,53 @@ namespace AWSMonitor
                 MS.Header = "Multiselected Options";
                 ECContext.Items.Add(MS);
             }
-            else if(DaGrid.SelectedItems.Count.Equals(1))
+            else if(DaGrid.SelectedItems.Count.Equals(0) | DaGrid.SelectedItems.Count.Equals(1) )// Select the one Context row.
             {
-                var rabbit = DaGrid.SelectedItem;// Get the datarowview
-                DataRowView bunny = (DataRowView)rabbit;
-                var hare = bunny.Row;
-                var coney = hare["Pub IP"];
+                //===============================================================================================
+                DependencyObject dep = (DependencyObject)e.OriginalSource;
+                while ((dep != null) && !(dep is System.Windows.Controls.DataGridCell))
+                {
+                    dep = VisualTreeHelper.GetParent(dep);
+                }
+                if (dep == null) return;
 
-                //Build context Menu
-                System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
-                SSH.Click += new RoutedEventHandler(SSH_Click);
-                SSH.Header = "Open SSH to " + coney;
-                SSH.Tag = coney;
-                
-                System.Windows.Controls.MenuItem SCP = new System.Windows.Controls.MenuItem();
-                SCP.Click += new RoutedEventHandler(SCP_Click);
-                SCP.Header = "Open SCP to " + coney;
-                SCP.Tag = coney;
+                if (dep is System.Windows.Controls.DataGridCell)
+                {
+                    System.Windows.Controls.DataGridCell cell = dep as System.Windows.Controls.DataGridCell;
+                    cell.Focus();
 
-                ECContext.Items.Add(SSH);
-                ECContext.Items.Add(SCP);
+                    while ((dep != null) && !(dep is System.Windows.Controls.DataGridRow))
+                    {
+                        dep = VisualTreeHelper.GetParent(dep);
+                    }
+                    System.Windows.Controls.DataGridRow row = dep as System.Windows.Controls.DataGridRow;
+                    DaGrid.SelectedItem = row.DataContext;
 
-            }
+
+                    var rabbit = DaGrid.SelectedItem;// Get the datarowview
+                    DataRowView bunny = (DataRowView)rabbit;
+                    var hare = bunny.Row;
+                    var coney = hare["Pub IP"];
+
+                    //Build context Menu
+                    System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
+                    SSH.Click += new RoutedEventHandler(SSH_Click);
+                    SSH.Header = "Open SSH to " + coney;
+                    SSH.Tag = coney;
+
+                    System.Windows.Controls.MenuItem SCP = new System.Windows.Controls.MenuItem();
+                    SCP.Click += new RoutedEventHandler(SCP_Click);
+                    SCP.Header = "Open SCP to " + coney;
+                    SCP.Tag = coney;
+
+                    ECContext.Items.Add(SSH);
+                    ECContext.Items.Add(SCP);
+
+                }
+
+
+                     }//==================================================================================================
+
             else
             {
                 System.Windows.Controls.MenuItem NS = new System.Windows.Controls.MenuItem();
@@ -618,15 +648,32 @@ namespace AWSMonitor
                                          where t.Instances[0].InstanceId.Equals(instanceid)
                                          select t.Instances[0].PublicDnsName).FirstOrDefault();
 
-                        var iType = (from t in urtburgle
+                        //Virtualization type (HVM, Paravirtual)
+                        var ivirtType = (from t in urtburgle
                                          where t.Instances[0].InstanceId.Equals(instanceid)
                                          select t.Instances[0].VirtualizationType).FirstOrDefault();
 
+                        // InstanceType (m3/Large etc)
+                        var instancetype = (from t in urtburgle
+                                       where t.Instances[0].InstanceId.Equals(instanceid)
+                                       select t.Instances[0].InstanceType).FirstOrDefault();
 
+                        var SGs = (from t in urtburgle
+                                            where t.Instances[0].InstanceId.Equals(instanceid)
+                                            select t.Instances[0].SecurityGroups);
+                        string sglist = "";
+
+
+                        foreach(var ansg in SGs.FirstOrDefault())
+                        {
+                            if (sglist.Length > 2)
+                            { sglist += "\n"; }
+                            sglist += ansg.GroupName;
+                        }
                         //Add to table
 
 
-                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags, publicIP, publicDNS, istate, iType);
+                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags, publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
 
                     }
 
