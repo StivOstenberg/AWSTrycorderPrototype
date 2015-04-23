@@ -388,11 +388,67 @@ namespace AWSMonitor
 
         private void SCP_Click(object sender, RoutedEventArgs e)
         {
+            string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             var rabbit = DaGrid.SelectedItem;// Get the datarowview
             DataRowView bunny = (DataRowView)rabbit;
             var hare = bunny.Row;
             var TargetIP = hare["Pub IP"];
-            
+            if(File.Exists("winscp.exe"))//Should be included in directory.
+            {
+
+                   var PPKs = Directory.GetFiles(keydir, "*.ppk");
+                //Going to try each .ppk file in MyDocuments
+               foreach (var akeyfile in PPKs)
+               {
+                   try
+                   {
+                       //string puttyargs = "-ssh -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
+                       string winscpargs = "scp://ec2-user@" + TargetIP + ":22 /privatekey=" + akeyfile ;
+                       var result = System.Diagnostics.Process.Start("winscp.exe", winscpargs);
+                       System.Threading.Thread.Sleep(3000);
+
+
+                       IntPtr winscperrorwin = FindWindow(null, "Warning");
+                       if (winscperrorwin == IntPtr.Zero) ;
+                       else
+                       {
+                           SetForegroundWindow(winscperrorwin);
+                           SendKeys.SendWait("Y");
+                           result.Kill();
+                       }
+
+
+                       //Look for a Winscp error  Window and hit the Enter key.  Hacky, but it works.
+                       winscperrorwin = FindWindow(null, "Error - WinSCP");
+                       if (winscperrorwin == IntPtr.Zero) ;
+                       else
+                       {
+                           SetForegroundWindow(winscperrorwin);
+                           SendKeys.SendWait("{ENTER}");
+                           result.Kill();
+                       }
+
+
+                       if(result.MainWindowTitle.Contains("ec2-user"))//Ugly, but we have to check if connected. Fails if we dont accept key in time.
+                       {
+                           break;
+                       }
+                       else
+                       {
+                           //result.Kill();
+                       }
+                   }
+                   catch
+                   {
+                      int error = 0;
+                   }
+                }
+
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(@"WinSCP not found. Should be in same directory as this program.");
+            }
            
 
         }
