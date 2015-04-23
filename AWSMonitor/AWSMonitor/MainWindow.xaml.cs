@@ -615,22 +615,29 @@ namespace AWSMonitor
 
                     regioncounter++;
 
-                    Dispatcher.Invoke(doupdatePbDelegate,
-                        System.Windows.Threading.DispatcherPriority.Background,
-                        new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
+
 
                     //Try to get scheduled events on my Profile/aregion
                     var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
                     var request = new DescribeInstanceStatusRequest();
 
-
+                    Dispatcher.Invoke(doupdatePbDelegate,
+                       System.Windows.Threading.DispatcherPriority.Background,
+                        new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
                     var instatresponse = ec2.DescribeInstanceStatus(request);
 
 
                     var indatarequest = new DescribeInstancesRequest();
+
+
+
+
                     foreach (var instat in instatresponse.InstanceStatuses)
                     {
-                        indatarequest.InstanceIds.Add(instat.InstanceId);
+                        Dispatcher.Invoke(doupdatePbDelegate,
+                           System.Windows.Threading.DispatcherPriority.Background,
+                           new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
+                           indatarequest.InstanceIds.Add(instat.InstanceId);
                     }
                     DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
 
@@ -643,7 +650,10 @@ namespace AWSMonitor
                         string instanceid = instat.InstanceId;
                         string instancename = "";
                         ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region + "   Instance: " + instanceid;
-                        //How do we get the tag keys for an instance??? Argh!
+
+
+
+
                         var status = instat.Status.Status;
                         string AZ = instat.AvailabilityZone;
                         var istate = instat.InstanceState.Name;
