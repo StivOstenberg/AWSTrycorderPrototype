@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
+using System.IO;
 using System.Windows.Forms;
 using System.Linq;
 using System.Text;
@@ -54,6 +55,7 @@ namespace AWSMonitor
             var Profiles = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase);
             this.ShowInTaskbar = true;
             this.Topmost = false;
+            
 
             foreach(string aProfile in Profiles)
             {
@@ -321,14 +323,54 @@ namespace AWSMonitor
 
         private void SSH_Click(object sender, EventArgs e)
         {
+            string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string action = "SSH";
+            string puttyexe = @"C:\Program Files (x86)\PuTTY\putty.exe";
+            var rabbit = DaGrid.SelectedItem;// Get the datarowview
+            DataRowView bunny = (DataRowView)rabbit;
+            var hare = bunny.Row;
+            var TargetIP = hare["Pub IP"];
+            
+            if(File.Exists(puttyexe)) //No point if not installed.
+            {
+               var PPKs = Directory.GetFiles(keydir, "*.ppk");
+                //Going to try each .ppk file in MyDocuments
+               foreach (var akeyfile in PPKs)
+               {
+                   try
+                   {
+                       string puttyargs = "-ssh -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
+                       var result = System.Diagnostics.Process.Start(puttyexe, puttyargs);
+                       System.Threading.Thread.Sleep(2000);
+                       if(result.MainWindowTitle.Contains("ec2-user"))
+                       {
+                           break;
+                       }
+                       else
+                       {
+                           result.Kill();
+                       }
+                   }
+                   catch
+                   {
 
+                   }
+               }
+
+            }
+            else //Need to allow find at some point.  That means config file.  Sigh.
+            {
+                System.Windows.MessageBox.Show(@"C:\Program Files (x86)\PuTTY\putty.exe not found");
+            }
             
         }
 
         private void SCP_Click(object sender, RoutedEventArgs e)
         {
-            string action = "SCP";
+            var rabbit = DaGrid.SelectedItem;// Get the datarowview
+            DataRowView bunny = (DataRowView)rabbit;
+            var hare = bunny.Row;
+            var TargetIP = hare["Pub IP"];
             
            
 
