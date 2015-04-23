@@ -35,6 +35,10 @@ namespace AWSMonitor
     {
         public DataTable RawResults = GetEC2StatusTable();
 
+        private delegate void UpdateProgressBarDelegate(System.Windows.DependencyProperty dp, Object value);
+        UpdateProgressBarDelegate doupdatePbDelegate;
+        double regioncounter = 0;
+
         //Code required to manipulate Windows.
         [System.Runtime.InteropServices.DllImport("USER32.DLL", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
@@ -107,7 +111,7 @@ namespace AWSMonitor
 
         }
 
-        private delegate void UpdateProgressBarDelegate(System.Windows.DependencyProperty dp, Object value);
+
 
         static DataTable GetEC2StatusTable()
         {
@@ -177,17 +181,10 @@ namespace AWSMonitor
             ProgressBar1.Visibility = System.Windows.Visibility.Visible;
             DataTable MyDataTable = GetEC2StatusTable();
             TagFilterCombo.Items.Clear();
-            //Set Default For Testing...
-            var region = Amazon.RegionEndpoint.USWest2;
-            
-
-
-
-
 
             //Create a new instance of our ProgressBar Delegate that points
             // to the ProgressBar's SetValue method.
-            UpdateProgressBarDelegate updatePbDelegate =  new UpdateProgressBarDelegate(ProgressBar1.SetValue);
+            doupdatePbDelegate =  new UpdateProgressBarDelegate(ProgressBar1.SetValue);
 
             var prof2process = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase).ToList();
             var regions2process = Amazon.RegionEndpoint.EnumerableAllRegions.ToList();
@@ -226,7 +223,8 @@ namespace AWSMonitor
             ProgressBar1.Minimum = 0;
             //Subtract 2 from the count for Beijing and GovWest
             ProgressBar1.Maximum = prof2process.Count * regions2process.Count;
-            ProgressBar1.Value = 0;
+            ProgressBar1.Value = 1;
+            regioncounter = 0;
 
             // Start the loops.  For each Profile, iterate through all regions.
             //Foreach Profile(credential) set aprofile
@@ -234,6 +232,7 @@ namespace AWSMonitor
             //Trying to parallelize this.
             // Establish QUEUE for threads to report back on
             Queue<DataTable> ProfileResults = new Queue<DataTable>();
+            ProgressBar1.Visibility = System.Windows.Visibility.Visible;
              foreach (var aprofile in prof2process)
             {
                 //Call the ScanProfile function to fill queue
@@ -244,9 +243,10 @@ namespace AWSMonitor
 
                  //How to parallelize this?  
                  ProfileResults.Enqueue( ScanProfile(arequest));//Currently returns values via the ProfileResults Queue.;
+                 
             }
 
-
+             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             while(ProfileResults.Count>0)
             {
                 var atable = ProfileResults.Dequeue();
@@ -335,7 +335,6 @@ namespace AWSMonitor
         private void SSH_Click(object sender, EventArgs e)
         {
             string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            string action = "SSH";
             string puttyexe = @"C:\Program Files (x86)\PuTTY\putty.exe";
             var rabbit = DaGrid.SelectedItem;// Get the datarowview
             DataRowView bunny = (DataRowView)rabbit;
@@ -354,7 +353,7 @@ namespace AWSMonitor
                        var result = System.Diagnostics.Process.Start(puttyexe, puttyargs);
                        System.Threading.Thread.Sleep(1500);
 
-                       //Look for a Putty Alert Window and hit the Y key.  Hacky, but it works.
+                       //Look for a Putty Security Alert Window and hit the Y key.  Hacky, but it works.
                        IntPtr puttywin = FindWindow(null, "PuTTY Security Alert");
                        if (puttywin == IntPtr.Zero) ;
                        else
@@ -614,6 +613,11 @@ namespace AWSMonitor
                     if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
                     var region = aregion;
 
+                    regioncounter++;
+
+                    Dispatcher.Invoke(doupdatePbDelegate,
+                        System.Windows.Threading.DispatcherPriority.Background,
+                        new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
 
                     //Try to get scheduled events on my Profile/aregion
                     var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
@@ -741,6 +745,7 @@ namespace AWSMonitor
 
 
                         MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
+
 
                     }
 
