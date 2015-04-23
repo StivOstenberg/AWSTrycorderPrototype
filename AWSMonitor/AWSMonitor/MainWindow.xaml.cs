@@ -35,6 +35,13 @@ namespace AWSMonitor
     {
         public DataTable RawResults = GetEC2StatusTable();
 
+        //Code required to manipulate Windows.
+        [System.Runtime.InteropServices.DllImport("USER32.DLL", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        [System.Runtime.InteropServices.DllImport("USER32.DLL", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        static extern bool SetForegroundWindow(IntPtr hWnd);
+
+
 
         public string Filepicker()
         {
@@ -115,6 +122,7 @@ namespace AWSMonitor
             table.Columns.Add("Events", typeof(int));
             table.Columns.Add("EventList", typeof(string));
             table.Columns.Add("Tags", typeof(string));
+            table.Columns.Add("Priv IP", typeof(string));
             table.Columns.Add("Pub IP", typeof(string));
             table.Columns.Add("Pub DNS", typeof(string));
             table.Columns.Add("State", typeof(string));
@@ -137,6 +145,9 @@ namespace AWSMonitor
             public int Events { get; set; }
             public string EventList { get; set; }
             public string Tags { get; set; }
+
+            public string PrivvyIP { get; set; }
+
             public string PubIP { get; set; }
             public string PubDNS { get; set; }
             public string State { get; set; }
@@ -341,8 +352,19 @@ namespace AWSMonitor
                    {
                        string puttyargs = "-ssh -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
                        var result = System.Diagnostics.Process.Start(puttyexe, puttyargs);
-                       System.Threading.Thread.Sleep(2000);
-                       if(result.MainWindowTitle.Contains("ec2-user"))
+                       System.Threading.Thread.Sleep(1500);
+
+                       //Look for a Putty Alert Window and hit the Y key.  Hacky, but it works.
+                       IntPtr puttywin = FindWindow(null, "PuTTY Security Alert");
+                       if (puttywin == IntPtr.Zero) ;
+                       else
+                       {
+                           SetForegroundWindow(puttywin);
+                           SendKeys.SendWait("y");
+                          
+                       }
+
+                       if(result.MainWindowTitle.Contains("ec2-user"))//Ugly, but we have to check if connected. Fails if we dont accept key in time.
                        {
                            break;
                        }
@@ -674,7 +696,11 @@ namespace AWSMonitor
 
                         //Need more info for SSH and SCP...
 
-
+                        var privvyIP = (from t in urtburgle
+                                        where t.Instances[0].InstanceId.Equals(instanceid)
+                                        select t.Instances[0].PrivateIpAddress).FirstOrDefault();
+                        
+                        
                         var publicIP = (from t in urtburgle
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].PublicIpAddress).FirstOrDefault();
@@ -709,12 +735,12 @@ namespace AWSMonitor
                         }
                         else
                         {
-                            sglist = "NONE!";
+                            sglist = "_NONE!_";
                         }
                         //Add to table
 
 
-                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags, publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
+                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
 
                     }
 
