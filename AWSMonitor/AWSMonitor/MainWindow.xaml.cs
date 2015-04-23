@@ -625,22 +625,15 @@ namespace AWSMonitor
                         string profile = aprofile;
                         string myregion = region.DisplayName + "  -  " + region.SystemName;
                         int eventnumber = instat.Events.Count();
-                        
+
                         string eventlist = "";
                         var urtburgle = DescResult.Reservations;
-
-
 
                         string tags = ""; // Holds the list of tags to print out.
 
                         var loadtags = (from t in DescResult.Reservations
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].Tags).AsEnumerable();
-
-
-
-
-
 
                         Dictionary<string, string> taglist = new Dictionary<string, string>();
                         foreach (var rekey in loadtags)
@@ -706,11 +699,17 @@ namespace AWSMonitor
                         string sglist = "";
 
 
-                        foreach(var ansg in SGs.FirstOrDefault())
+                        if (SGs.Count() > 0)
                         {
-                            if (sglist.Length > 2)
-                            { sglist += "\n"; }
-                            sglist += ansg.GroupName;
+                            foreach (var ansg in SGs.FirstOrDefault())
+                            {
+                                if (sglist.Length > 2) { sglist += "\n"; }
+                                sglist += ansg.GroupName;
+                            }
+                        }
+                        else
+                        {
+                            sglist = "NONE!";
                         }
                         //Add to table
 
