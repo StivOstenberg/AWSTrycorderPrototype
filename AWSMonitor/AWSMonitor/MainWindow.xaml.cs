@@ -300,7 +300,7 @@ namespace AWSMonitor
 
                 }
                 DaGrid.ItemsSource = newdt.AsDataView();
-                ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count;
+                ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count + " of " + RawResults.Rows.Count;
             }
             ShowHideColumns();
         }
