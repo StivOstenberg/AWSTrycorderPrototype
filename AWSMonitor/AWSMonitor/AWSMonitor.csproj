@@ -34,7 +34,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>StivICO.ico</ApplicationIcon>
+    <ApplicationIcon>Ec2m.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AWSSDK">
@@ -108,7 +108,7 @@
     <Resource Include="license-dotnet.txt" />
     <Resource Include="license-winscp.txt" />
     <Resource Include="scplicense.txt" />
-    <Resource Include="StivICO.ico" />
+    <Resource Include="Ec2m.ico" />
     <Content Include="WinSCP.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
