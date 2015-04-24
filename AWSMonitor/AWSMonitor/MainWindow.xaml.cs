@@ -349,7 +349,7 @@ namespace AWSMonitor
                {
                    try
                    {
-                       string puttyargs = "-ssh -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
+                       string puttyargs = "-ssh -X -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
                        var result = System.Diagnostics.Process.Start(puttyexe, puttyargs);
                        System.Threading.Thread.Sleep(2000);
 
