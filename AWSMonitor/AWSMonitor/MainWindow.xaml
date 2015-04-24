@@ -39,9 +39,9 @@
                 <MenuItem x:Name="CkAllRMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="CkAllRMI_Click"/>
                 <MenuItem x:Name="UCkAllRMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCkAllRMI_Click"/>
             </MenuItem>
-            <MenuItem x:Name="Columns" Header="Columns">
-            <MenuItem x:Name="CkAllCMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" />
-            <MenuItem x:Name="UCkAllCMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" />
+            <MenuItem x:Name="ColumnsMI" Header="Columns">
+            <MenuItem x:Name="CkAllCMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="CkAllCMI_Click" />
+            <MenuItem x:Name="UCkAllCMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCkAllCMI_Checked" />
             </MenuItem>
             
             <MenuItem x:Name="About_Menu_Item" Header="About"/>

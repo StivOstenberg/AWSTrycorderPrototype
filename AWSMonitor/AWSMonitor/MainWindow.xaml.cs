@@ -351,7 +351,7 @@ namespace AWSMonitor
                    {
                        string puttyargs = "-ssh -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
                        var result = System.Diagnostics.Process.Start(puttyexe, puttyargs);
-                       System.Threading.Thread.Sleep(1500);
+                       System.Threading.Thread.Sleep(2000);
 
                        //Look for a Putty Security Alert Window and hit the Y key.  Hacky, but it works.
                        IntPtr puttywin = FindWindow(null, "PuTTY Security Alert");
@@ -552,6 +552,8 @@ namespace AWSMonitor
             System.Diagnostics.Process.Start(PayPalURL);
         }
 
+
+        #region Event Handlers
         private void CKAllPMI_Click(object sender, RoutedEventArgs e)
         {
             //Checks all Profilemenu items
@@ -581,6 +583,22 @@ namespace AWSMonitor
         private void UCkAllRMI_Click(object sender, RoutedEventArgs e)
         {
             foreach (System.Windows.Controls.MenuItem anitem in RegionMI.Items)
+            {
+                if (anitem.IsCheckable) anitem.IsChecked = false;
+            }
+        }
+
+        private void CkAllCMI_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (System.Windows.Controls.MenuItem anitem in ColumnsMI.Items)
+            {
+                if (anitem.IsCheckable) anitem.IsChecked = true;
+            }
+        }
+
+        private void UCkAllCMI_Checked(object sender, RoutedEventArgs e)
+        {
+            foreach (System.Windows.Controls.MenuItem anitem in ColumnsMI.Items)
             {
                 if (anitem.IsCheckable) anitem.IsChecked = false;
             }
@@ -651,6 +669,17 @@ namespace AWSMonitor
             }
         }
 
+        private void EC2Event_Monitor_Closing(object sender, CancelEventArgs e)
+        {
+            System.Windows.Forms.Application.Exit();
+        }
+
+        private void ColumnsClick(object sender, System.EventArgs e)
+        {
+            ShowHideColumns();
+        }
+
+        #endregion Eventhandlers
         public DataTable ScanProfile(ScanRequest Request)
         {
             try
@@ -830,16 +859,9 @@ namespace AWSMonitor
 
         }
 
-        private void EC2Event_Monitor_Closing(object sender, CancelEventArgs e)
-        {
-            System.Windows.Forms.Application.Exit();
-        }
 
 
-        private void ColumnsClick(object sender, System.EventArgs e)
-        {
-            ShowHideColumns();
-        }
+
 
         private void ShowHideColumns()
         {
@@ -847,7 +869,7 @@ namespace AWSMonitor
             {
                 string myheader = (string)anitem.Header;
                 //Check status in Column Menu
-                bool getcheckedstatus = (from System.Windows.Controls.MenuItem t in Columns.Items
+                bool getcheckedstatus = (from System.Windows.Controls.MenuItem t in ColumnsMI.Items
                                         where t.Header.Equals(myheader)
                                         select t.IsChecked).FirstOrDefault();
 
@@ -856,6 +878,8 @@ namespace AWSMonitor
             }
             
         }
+
+
     }
 
     public class ScanRequest
