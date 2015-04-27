@@ -705,7 +705,7 @@ namespace AWSMonitor
                     //Try to get scheduled events on my Profile/aregion
                     var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
                     var request = new DescribeInstanceStatusRequest();
-
+                    request.IncludeAllInstances = true;
                     Dispatcher.Invoke(doupdatePbDelegate,
                        System.Windows.Threading.DispatcherPriority.Background,
                         new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
