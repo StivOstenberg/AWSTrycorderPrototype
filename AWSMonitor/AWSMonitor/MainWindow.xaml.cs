@@ -719,9 +719,7 @@ namespace AWSMonitor
 
                     foreach (var instat in instatresponse.InstanceStatuses)
                     {
-                        Dispatcher.Invoke(doupdatePbDelegate,
-                           System.Windows.Threading.DispatcherPriority.Background,
-                           new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
+
                            indatarequest.InstanceIds.Add(instat.InstanceId);
                     }
                     DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
@@ -735,7 +733,9 @@ namespace AWSMonitor
                         string instanceid = instat.InstanceId;
                         string instancename = "";
                         ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region + "   Instance: " + instanceid;
-
+                        Dispatcher.Invoke(doupdatePbDelegate,
+                            System.Windows.Threading.DispatcherPriority.Background,
+                            new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
 
 
 
