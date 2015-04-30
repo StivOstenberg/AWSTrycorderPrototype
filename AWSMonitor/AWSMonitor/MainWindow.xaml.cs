@@ -124,7 +124,7 @@ namespace AWSMonitor
             table.Columns.Add("InstanceID", typeof(string));
             table.Columns.Add("AvailabilityZone", typeof(string));
             table.Columns.Add("Status", typeof(string));
-            table.Columns.Add("Events", typeof(int));
+            table.Columns.Add("Events", typeof(string));
             table.Columns.Add("EventList", typeof(string));
             table.Columns.Add("Tags", typeof(string));
             table.Columns.Add("PrivIP", typeof(string));
@@ -147,7 +147,7 @@ namespace AWSMonitor
             public string InstanceID { get; set; }
             public string AvailabilityZone { get; set; }
             public string Status { get; set; }
-            public int Events { get; set; }
+            public string Events { get; set; }
             public string EventList { get; set; }
             public string Tags { get; set; }
 
@@ -844,7 +844,7 @@ namespace AWSMonitor
                         //Add to table
 
 
-
+                        string rabbit = profile+ myregion+ instancename+ instanceid+ AZ+ status+ eventnumber+ eventlist+ tags+ privvyIP+ publicIP+ publicDNS+ istate+ ivirtType+instancetype+ sglist;
 
                         MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
 
