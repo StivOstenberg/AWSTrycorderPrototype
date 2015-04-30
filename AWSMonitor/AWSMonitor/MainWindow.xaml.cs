@@ -98,6 +98,7 @@ namespace AWSMonitor
             }
             foreach(var acolumn in GetEC2StatusTable().Columns) //Set the Column Show Hide menu up
             {
+                ColumnCombo.Items.Add(acolumn.ToString());
                 System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
                 mi.IsCheckable = true;
                 mi.Header = acolumn.ToString();
@@ -108,7 +109,7 @@ namespace AWSMonitor
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[3];
                 Proot.Items.Add(mi);
             }
-
+            ColumnCombo.SelectedItem = "Tags";
         }
 
 
@@ -126,9 +127,9 @@ namespace AWSMonitor
             table.Columns.Add("Events", typeof(int));
             table.Columns.Add("EventList", typeof(string));
             table.Columns.Add("Tags", typeof(string));
-            table.Columns.Add("Priv IP", typeof(string));
-            table.Columns.Add("Pub IP", typeof(string));
-            table.Columns.Add("Pub DNS", typeof(string));
+            table.Columns.Add("PrivIP", typeof(string));
+            table.Columns.Add("PubIP", typeof(string));
+            table.Columns.Add("PubDNS", typeof(string));
             table.Columns.Add("State", typeof(string));
             table.Columns.Add("vType", typeof(string));
             table.Columns.Add("iType", typeof(string));
@@ -283,12 +284,12 @@ namespace AWSMonitor
             var newtable = RawResults.Copy();
             string fxp = ""; // The string what will build our query.
             if (FilterTagText.Text.Equals("")) return;
-
+            string columntofilter = ColumnCombo.SelectedItem.ToString();
             if (fxp.Length > 2) fxp += " and ";
             else
             {
                 var newbie = from record in RawResults.AsEnumerable()
-                             where record.Field<string>("Tags").Contains(FilterTagText.Text)
+                             where record.Field<string>(columntofilter).Contains(FilterTagText.Text)
                              select record;
                 var newdt = GetEC2StatusTable();
                 int count = newbie.Count();
@@ -798,25 +799,29 @@ namespace AWSMonitor
                         var privvyIP = (from t in urtburgle
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].PrivateIpAddress).FirstOrDefault();
-                        
+                        if (String.IsNullOrEmpty(privvyIP)) privvyIP = "?";
                         
                         var publicIP = (from t in urtburgle
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].PublicIpAddress).FirstOrDefault();
+                        if (String.IsNullOrEmpty(publicIP)) publicIP = "";
 
                         var publicDNS = (from t in urtburgle
                                          where t.Instances[0].InstanceId.Equals(instanceid)
                                          select t.Instances[0].PublicDnsName).FirstOrDefault();
+                        if (String.IsNullOrEmpty(publicDNS)) publicDNS = "";
 
                         //Virtualization type (HVM, Paravirtual)
                         var ivirtType = (from t in urtburgle
                                          where t.Instances[0].InstanceId.Equals(instanceid)
                                          select t.Instances[0].VirtualizationType).FirstOrDefault();
+                        if (String.IsNullOrEmpty(ivirtType)) ivirtType = "?";
 
                         // InstanceType (m3/Large etc)
                         var instancetype = (from t in urtburgle
                                        where t.Instances[0].InstanceId.Equals(instanceid)
                                        select t.Instances[0].InstanceType).FirstOrDefault();
+                        if (String.IsNullOrEmpty(instancetype)) instancetype = "?";
 
                         var SGs = (from t in urtburgle
                                             where t.Instances[0].InstanceId.Equals(instanceid)
@@ -837,6 +842,8 @@ namespace AWSMonitor
                             sglist = "_NONE!_";
                         }
                         //Add to table
+
+
 
 
                         MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
@@ -877,6 +884,11 @@ namespace AWSMonitor
                 else anitem.Visibility = System.Windows.Visibility.Hidden;
             }
             
+        }
+
+        private void FilterTagText_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            DoFilter();
         }
 
 
