@@ -127,9 +127,9 @@ namespace AWSMonitor
             table.Columns.Add("Events", typeof(string));
             table.Columns.Add("EventList", typeof(string));
             table.Columns.Add("Tags", typeof(string));
-            table.Columns.Add("PrivIP", typeof(string));
-            table.Columns.Add("PubIP", typeof(string));
-            table.Columns.Add("PubDNS", typeof(string));
+            table.Columns.Add("Priv IP", typeof(string));
+            table.Columns.Add("Pub IP", typeof(string));
+            table.Columns.Add("Pub DNS", typeof(string));
             table.Columns.Add("State", typeof(string));
             table.Columns.Add("vType", typeof(string));
             table.Columns.Add("iType", typeof(string));
