@@ -50,10 +50,22 @@ namespace AWSMonitor
         public string Filepicker()
         {
             System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
-            ofd.Filter = "All Files|*.*|Script (*.py, *.sh)|*.py*;*.sh"; ;
+            ofd.Filter = "All Files|*.*|Script (*.py, *.sh)|*.py*;*.sh"; 
             if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
 
+                return (ofd.FileName);
+            }
+            return ("");
+        }
+
+        public string Filepicker(string Filter)
+        {
+            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
+            ofd.Filter = Filter;
+            ofd.InitialDirectory = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
                 return (ofd.FileName);
             }
             return ("");
@@ -353,7 +365,6 @@ namespace AWSMonitor
                        string puttyargs = "-ssh -X -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
                        var result = System.Diagnostics.Process.Start(puttyexe, puttyargs);
                        System.Threading.Thread.Sleep(2000);
-
                        //Look for a Putty Security Alert Window and hit the Y key.  Hacky, but it works.
                        IntPtr puttywin = FindWindow(null, "PuTTY Security Alert");
                        if (puttywin == IntPtr.Zero) ;
@@ -889,6 +900,22 @@ namespace AWSMonitor
         private void FilterTagText_TextChanged(object sender, TextChangedEventArgs e)
         {
             DoFilter();
+        }
+
+        private void Export_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.MessageBox.Show("Export not yet implimented.");
+        }
+
+        private void LoadCred_Click(object sender, RoutedEventArgs e)
+        {
+            //Loading a credential file.
+
+            //Select file
+            string credfile = Filepicker("All Files|*.*");
+            //Import creds
+
+            //Add to VS Creds?
         }
 
 

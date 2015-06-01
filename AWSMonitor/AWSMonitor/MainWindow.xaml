@@ -28,7 +28,8 @@
         <Button x:Name="FilepickerButton" Grid.ColumnSpan="2" Content="..." HorizontalAlignment="Left" Margin="565,0,0,37.8" Width="28" RenderTransformOrigin="0.054,-0.003" Height="22" VerticalAlignment="Bottom" Click="FilepickerButton_Click" ToolTip="Select local file to upload"/>
         <Menu x:Name="MainMenu" Grid.ColumnSpan="3" Height="31" Margin="0,0,-0.4,0" VerticalAlignment="Top">
             <MenuItem x:Name="FileMenu" Header="File">
-                <MenuItem x:Name="Export" Header="Export" HorizontalAlignment="Left" Width="144.8"/>
+                <MenuItem x:Name="Export" Header="Export*" HorizontalAlignment="Left"  Click="Export_Click"/>
+                <MenuItem x:Name="LoadCred" Header="Load Credential File" HorizontalAlignment="Left" Click="LoadCred_Click"  />
             </MenuItem>
             <MenuItem x:Name="ProfilesMI" Header="Profiles" StaysOpenOnClick="True">
                 <MenuItem x:Name="CKAllPMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="CKAllPMI_Click"/>
