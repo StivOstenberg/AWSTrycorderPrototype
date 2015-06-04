@@ -921,7 +921,33 @@ namespace AWSMonitor
             //Select file
             string credfile = Filepicker("All Files|*.*");
             //Import creds
+            var txt = File.ReadAllText(credfile);
+            Dictionary<string, Dictionary<string, string>> ini = new Dictionary<string, Dictionary<string, string>>(StringComparer.InvariantCultureIgnoreCase);
 
+            Dictionary<string, string> currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            ini[""] = currentSection;
+
+            foreach (var line in txt.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                       .Where(t => !string.IsNullOrWhiteSpace(t))
+                       .Select(t => t.Trim()))
+            {
+                if (line.StartsWith(";"))
+                    continue;
+
+                if (line.StartsWith("[") && line.EndsWith("]"))
+                {
+                    currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+                    ini[line.Substring(1, line.LastIndexOf("]") - 1)] = currentSection;
+                    continue;
+                }
+
+                var idx = line.IndexOf("=");
+                if (idx == -1)
+                    currentSection[line] = "";
+                else
+                    currentSection[line.Substring(0, idx)] = line.Substring(idx + 1);
+            }
+            var deleteme = "";
             //Add to VS Creds?
         }
 
