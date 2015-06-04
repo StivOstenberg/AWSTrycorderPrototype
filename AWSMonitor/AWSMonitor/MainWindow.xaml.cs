@@ -135,6 +135,7 @@ namespace AWSMonitor
             table.Columns.Add("Name", typeof(string));
             table.Columns.Add("InstanceID", typeof(string));
             table.Columns.Add("AvailabilityZone", typeof(string));
+            table.Columns.Add("Platform", typeof(string));
             table.Columns.Add("Status", typeof(string));
             table.Columns.Add("Events", typeof(string));
             table.Columns.Add("EventList", typeof(string));
@@ -245,6 +246,7 @@ namespace AWSMonitor
             //Trying to parallelize this.
             // Establish QUEUE for threads to report back on
             Queue<DataTable> ProfileResults = new Queue<DataTable>();
+
             ProgressBar1.Visibility = System.Windows.Visibility.Visible;
              foreach (var aprofile in prof2process)
             {
@@ -805,6 +807,11 @@ namespace AWSMonitor
                             }
                         }
 
+                        var platform = (from t in urtburgle
+                                        where t.Instances[0].InstanceId.Equals(instanceid)
+                                        select t.Instances[0].Platform).FirstOrDefault();
+                        if (String.IsNullOrEmpty(platform)) platform = "Linux";
+
                         //Need more info for SSH and SCP...
 
                         var privvyIP = (from t in urtburgle
@@ -857,7 +864,7 @@ namespace AWSMonitor
 
                         string rabbit = profile+ myregion+ instancename+ instanceid+ AZ+ status+ eventnumber+ eventlist+ tags+ privvyIP+ publicIP+ publicDNS+ istate+ ivirtType+instancetype+ sglist;
 
-                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
+                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
 
 
                     }
