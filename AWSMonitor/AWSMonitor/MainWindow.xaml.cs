@@ -917,7 +917,7 @@ namespace AWSMonitor
         private void LoadCred_Click(object sender, RoutedEventArgs e)
         {
             //Loading a credential file.
-
+            string results = "";
             //Select file
             string credfile = Filepicker("All Files|*.*");
             //Import creds
@@ -947,11 +947,71 @@ namespace AWSMonitor
                 else
                     currentSection[line.Substring(0, idx)] = line.Substring(idx + 1);
             }
-            var deleteme = "";
-            //Add to VS Creds?
+
+
+            //Amazon.Util.ProfileManager.RegisterProfile(profileName, accessKey, secretKey);
+
+            //Build a list of current keys to use to avoid dupes due to changed "profile" names.
+            Dictionary<string, string> currentaccesskeys = new Dictionary<string,string>();
+             
+            foreach (KeyValuePair<string, Dictionary<string, string>> kvp in ini)
+            {
+                if (kvp.Key == "") continue;
+                currentaccesskeys.Add(kvp.Key.ToString(),kvp.Value["aws_access_key_id"].ToString());
+            }
+
+            foreach(KeyValuePair<string,Dictionary<string,string>> kvp in ini)
+            {
+                string profileName = "";
+                string accessKey = "";
+                string secretKey = "";
+                if (kvp.Key=="") continue;
+
+                profileName = kvp.Key.ToString();
+                accessKey = kvp.Value["aws_access_key_id"].ToString();
+                secretKey = kvp.Value["aws_secret_access_key"].ToString();
+
+
+                if(Amazon.Util.ProfileManager.ListProfileNames().Contains(profileName))
+                {
+                    var daP = Amazon.Util.ProfileManager.GetAWSCredentials(profileName).GetCredentials();
+                    if(daP.AccessKey==accessKey & daP.SecretKey==secretKey)
+                    {
+                        //dey da same
+                    }
+                    else
+                    {
+                        results += profileName + " keys do not match existing profile!\n";
+                    }
+
+                }
+                else //Profile does not exist by this name.  
+                {                   
+                    if (currentaccesskeys.Values.Contains(accessKey))//Do we already have that key?
+                    {
+                        //We are trying to enter a duplicate profile name for the same key. 
+                        string existingprofile = "";
+                        foreach(KeyValuePair<string,string> minikvp in currentaccesskeys)
+                        {
+                            if (minikvp.Value == accessKey) existingprofile = minikvp.Key.ToString();
+                        }
+
+                        results += profileName + " already exists as " + existingprofile + ".\n";
+                    }
+                    else
+                    {
+                        results += profileName + " added to credential store!\n";
+                        // Amazon.Util.ProfileManager.RegisterProfile(profileName, accessKey, secretKey);
+                    }
+                }
+
+            }
+
+            System.Windows.MessageBox.Show(results, "Results");
+
         }
 
-
+        //endlc
     }
 
     public class ScanRequest
