@@ -696,13 +696,13 @@ namespace AWSMonitor
         #endregion Eventhandlers
         public DataTable ScanProfile(ScanRequest Request)
         {
+            Amazon.Runtime.AWSCredentials credential;
             try
             {
                 var aprofile = Request.Profile;
                 var regions2process = Request.Regions;
                 var SubmitResults = Request.ResultQueue;
-
-                Amazon.Runtime.AWSCredentials credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
+                credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
                 var MyDataTable = GetEC2StatusTable();
                 //Foreach aregion
                 foreach (var aregion in regions2process)
@@ -877,9 +877,13 @@ namespace AWSMonitor
             }
             catch(Exception ex)
             {
-                //Will figure out what to do with this later.
-                var anerror = ex;
-                throw ex; 
+                //If we failed to connect with creds.
+
+                string error = new string(ex.ToString().TakeWhile(c => c != '\n').ToArray());
+                System.Windows.MessageBox.Show(error, Request.Profile.ToString() + " credentials failed to work.\n");
+                var MyDataTable = GetEC2StatusTable();
+                return MyDataTable;
+
             }
 
         }
@@ -1007,7 +1011,7 @@ namespace AWSMonitor
                         if (newaccessKey.Length.Equals(20) & newsecretKey.Length.Equals(40))
                         {
                             results += newprofileName + " added to credential store!\n";
-                            // Amazon.Util.ProfileManager.RegisterProfile(newprofileName, newaccessKey, newsecretKey);
+                            //Amazon.Util.ProfileManager.RegisterProfile(newprofileName, newaccessKey, newsecretKey);
                         }
                         else
                         {
