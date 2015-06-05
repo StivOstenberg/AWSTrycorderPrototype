@@ -949,59 +949,70 @@ namespace AWSMonitor
             }
 
 
-            //Amazon.Util.ProfileManager.RegisterProfile(profileName, accessKey, secretKey);
+            //Amazon.Util.ProfileManager.RegisterProfile(newprofileName, newaccessKey, newsecretKey);
 
             //Build a list of current keys to use to avoid dupes due to changed "profile" names.
             Dictionary<string, string> currentaccesskeys = new Dictionary<string,string>();
              
-            foreach (KeyValuePair<string, Dictionary<string, string>> kvp in ini)
+            foreach (var aprofilename in Amazon.Util.ProfileManager.ListProfileNames())
             {
-                if (kvp.Key == "") continue;
-                currentaccesskeys.Add(kvp.Key.ToString(),kvp.Value["aws_access_key_id"].ToString());
+                var acred=Amazon.Util.ProfileManager.GetAWSCredentials(aprofilename).GetCredentials();
+                
+                currentaccesskeys.Add(aprofilename,acred.AccessKey);
             }
 
             foreach(KeyValuePair<string,Dictionary<string,string>> kvp in ini)
             {
-                string profileName = "";
-                string accessKey = "";
-                string secretKey = "";
+                string newprofileName = "";
+                string newaccessKey = "";
+                string newsecretKey = "";
                 if (kvp.Key=="") continue;
 
-                profileName = kvp.Key.ToString();
-                accessKey = kvp.Value["aws_access_key_id"].ToString();
-                secretKey = kvp.Value["aws_secret_access_key"].ToString();
+                newprofileName = kvp.Key.ToString();
+                newaccessKey = kvp.Value["aws_access_key_id"].ToString();
+                newsecretKey = kvp.Value["aws_secret_access_key"].ToString();
 
 
-                if(Amazon.Util.ProfileManager.ListProfileNames().Contains(profileName))
+                if(Amazon.Util.ProfileManager.ListProfileNames().Contains(newprofileName))
                 {
-                    var daP = Amazon.Util.ProfileManager.GetAWSCredentials(profileName).GetCredentials();
-                    if(daP.AccessKey==accessKey & daP.SecretKey==secretKey)
+                    var daP = Amazon.Util.ProfileManager.GetAWSCredentials(newprofileName).GetCredentials();
+                    if(daP.AccessKey==newaccessKey & daP.SecretKey==newsecretKey)
                     {
                         //dey da same
                     }
                     else
                     {
-                        results += profileName + " keys do not match existing profile!\n";
+                        results += newprofileName + " keys do not match existing profile!\n";
                     }
 
                 }
                 else //Profile does not exist by this name.  
                 {                   
-                    if (currentaccesskeys.Values.Contains(accessKey))//Do we already have that key?
+                    if (currentaccesskeys.Values.Contains(newaccessKey))//Do we already have that key?
                     {
                         //We are trying to enter a duplicate profile name for the same key. 
                         string existingprofile = "";
                         foreach(KeyValuePair<string,string> minikvp in currentaccesskeys)
                         {
-                            if (minikvp.Value == accessKey) existingprofile = minikvp.Key.ToString();
+                            if (minikvp.Value == newaccessKey)
+                            {
+                                existingprofile = minikvp.Key.ToString();
+                            }
                         }
 
-                        results += profileName + " already exists as " + existingprofile + ".\n";
+                        results += newprofileName + " already exists as " + existingprofile + "\n";
                     }
                     else
                     {
-                        results += profileName + " added to credential store!\n";
-                        // Amazon.Util.ProfileManager.RegisterProfile(profileName, accessKey, secretKey);
+                        if (newaccessKey.Length.Equals(20) & newsecretKey.Length.Equals(40))
+                        {
+                            results += newprofileName + " added to credential store!\n";
+                            // Amazon.Util.ProfileManager.RegisterProfile(newprofileName, newaccessKey, newsecretKey);
+                        }
+                        else
+                        {
+                            results += newprofileName + "'s keys are not the correct length!\n";
+                        }
                     }
                 }
 
