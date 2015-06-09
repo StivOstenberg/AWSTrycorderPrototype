@@ -1021,8 +1021,15 @@ namespace AWSMonitor
                 }
 
             }
-
-            System.Windows.MessageBox.Show(results, "Results");
+            if (results.Equals(""))
+            {
+                string message = ini.Count.ToString() + " profiles in " + credfile + " already in credential store.";
+                System.Windows.MessageBox.Show(message, "Results");
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(results, "Results");
+            }
 
         }
 
