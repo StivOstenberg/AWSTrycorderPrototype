@@ -355,6 +355,7 @@ namespace AWSMonitor
             DataRowView bunny = (DataRowView)rabbit;
             var hare = bunny.Row;
             var TargetIP = hare["Pub IP"];
+            if (TargetIP.Equals("")) TargetIP = hare["Priv IP"];
             
             if(File.Exists(puttyexe)) //No point if not installed.
             {
@@ -655,7 +656,7 @@ namespace AWSMonitor
                     DataRowView bunny = (DataRowView)rabbit;
                     var hare = bunny.Row;
                     var coney = hare["Pub IP"];
-
+                    if (coney.Equals(""))  coney=hare["Priv IP"];
                     //Build context Menu
                     System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
                     SSH.Click += new RoutedEventHandler(SSH_Click);
