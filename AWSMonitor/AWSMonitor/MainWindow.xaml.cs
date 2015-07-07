@@ -451,15 +451,44 @@ namespace AWSMonitor
 
 
         #region Event Handlers
+        private void RDP_Click(object sender, EventArgs e)
+        {
+            string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            string puttyexe = @"C:\Program Files (x86)\PuTTY\putty.exe";
+            var selecteditem = DaGrid.SelectedItem;// Get the datarowview
+            DataRowView drv = (DataRowView)selecteditem;
+            var myrow = drv.Row;
+            var TargetIP = myrow["Pub IP"];
+            if (TargetIP.Equals("")) TargetIP = myrow["Priv IP"];
+
+
+            return;
+            Process rdcProcess = new Process();
+            //Try to save credentials
+            rdcProcess.StartInfo.FileName = Environment.ExpandEnvironmentVariables(@"%SystemRoot%\system32\cmdkey.exe");
+            //rdcProcess.StartInfo.Arguments = "/generic:TERMSRV/192.168.0.217 /user:" + "username" + " /pass:" + "password";
+            rdcProcess.StartInfo.Arguments = "/generic:TERMSRV/" + TargetIP;
+            rdcProcess.Start();
+            
+            //tehn connect
+            rdcProcess.StartInfo.FileName = Environment.ExpandEnvironmentVariables(@"%SystemRoot%\system32\mstsc.exe");
+            rdcProcess.StartInfo.Arguments = "/v " + "192.168.0.217"; // ip or name of computer to connect
+            rdcProcess.Start();
+
+
+
+
+        }
+
         private void SSH_Click(object sender, EventArgs e)
         {
             string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string puttyexe = @"C:\Program Files (x86)\PuTTY\putty.exe";
-            var rabbit = DaGrid.SelectedItem;// Get the datarowview
-            DataRowView bunny = (DataRowView)rabbit;
-            var hare = bunny.Row;
-            var TargetIP = hare["Pub IP"];
-            if (TargetIP.Equals("")) TargetIP = hare["Priv IP"];
+            var selecteditem = DaGrid.SelectedItem;// Get the datarowview
+            DataRowView drv = (DataRowView)selecteditem;
+            var myrow = drv.Row;
+            var TargetIP = myrow["Pub IP"];
+            if (TargetIP.Equals("")) TargetIP = myrow["Priv IP"];
 
             if (File.Exists(puttyexe)) //No point if not installed.
             {
@@ -690,22 +719,34 @@ namespace AWSMonitor
                     var rabbit = DaGrid.SelectedItem;// Get the datarowview
                     DataRowView bunny = (DataRowView)rabbit;
                     var hare = bunny.Row;
-                    var coney = hare["Pub IP"];
-                    if (coney.Equals(""))  coney=hare["Priv IP"];
-                    //Build context Menu
-                    System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
-                    SSH.Click += new RoutedEventHandler(SSH_Click);
-                    SSH.Header = "Open SSH to " + coney;
-                    SSH.Tag = coney;
+                    var mypubip = hare["Pub IP"];
+                    if (mypubip.Equals(""))  mypubip=hare["Priv IP"];
+                    var hassenpfeffer = hare["Platform"];
+                    //Build context Menus
 
-                    System.Windows.Controls.MenuItem SCP = new System.Windows.Controls.MenuItem();
-                    SCP.Click += new RoutedEventHandler(SCP_Click);
-                    SCP.Header = "Open SCP to " + coney;
-                    SCP.Tag = coney;
+                    if (hassenpfeffer.Equals("Linux"))
+                    {
+                        System.Windows.Controls.MenuItem SSH = new System.Windows.Controls.MenuItem();
+                        SSH.Click += new RoutedEventHandler(SSH_Click);
+                        SSH.Header = "Open SSH to " + mypubip;
+                        SSH.Tag = mypubip;
 
-                    ECContext.Items.Add(SSH);
-                    ECContext.Items.Add(SCP);
+                        System.Windows.Controls.MenuItem SCP = new System.Windows.Controls.MenuItem();
+                        SCP.Click += new RoutedEventHandler(SCP_Click);
+                        SCP.Header = "Open SCP to " + mypubip;
+                        SCP.Tag = mypubip;
 
+                        ECContext.Items.Add(SSH);
+                        ECContext.Items.Add(SCP);
+                    }
+                    else if(hassenpfeffer.Equals("Windows"))
+                    {
+                        System.Windows.Controls.MenuItem RDP = new System.Windows.Controls.MenuItem();
+                        RDP.Click += new RoutedEventHandler(RDP_Click);
+                        RDP.Header = "Open RDP to " + mypubip;
+                        RDP.Tag = mypubip;
+                        ECContext.Items.Add(RDP);
+                    }
                 }
 
 
