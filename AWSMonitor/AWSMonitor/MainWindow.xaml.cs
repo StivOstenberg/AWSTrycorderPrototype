@@ -865,11 +865,11 @@ namespace AWSMonitor
         public DataTable ScanProfile(ScanRequest Request)
         {
             Amazon.Runtime.AWSCredentials credential;
+            var aprofile = Request.Profile;
+            var regions2process = Request.Regions;
+            var SubmitResults = Request.ResultQueue;
             try
             {
-                var aprofile = Request.Profile;
-                var regions2process = Request.Regions;
-                var SubmitResults = Request.ResultQueue;
                 credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
                 var MyDataTable = GetEC2StatusTable();
                 //Foreach aregion
@@ -1049,6 +1049,22 @@ namespace AWSMonitor
 
                 string error = new string(ex.ToString().TakeWhile(c => c != '\n').ToArray());
                 System.Windows.MessageBox.Show(error, Request.Profile.ToString() + " credentials failed to work.\n");
+                //Try to flag the menu item so it no longer selectable, and maybe make she red.
+                System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[1];
+                foreach(System.Windows.Controls.MenuItem amenuitem in Proot.Items)
+                {
+                    if(amenuitem.Header==aprofile)
+                    {
+                        amenuitem.IsCheckable = false;
+                        amenuitem.IsChecked = false;
+                        amenuitem.Background = Brushes.Red;
+                        amenuitem.ToolTip = Request.Profile.ToString() + " credentials failed to work.\n";
+                    }
+                }
+
+
+
+
                 var MyDataTable = GetEC2StatusTable();
                 return MyDataTable;
 
