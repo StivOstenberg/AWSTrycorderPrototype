@@ -88,6 +88,7 @@ namespace AWSMonitor
                 mi.Header = aProfile;
                 mi.IsChecked = true;
                 mi.StaysOpenOnClick = true;
+                mi.Click += ProfileChecked;
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[1];
                 Proot.Items.Add(mi);
             }
@@ -98,13 +99,13 @@ namespace AWSMonitor
                 //Skip Beijing and USGov
                 if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
                 if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
-
-
                 System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
                 mi.IsCheckable = true;
                 mi.Header = aregion;
                 mi.IsChecked = true;
                 mi.StaysOpenOnClick = true;
+                
+
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[2];
                 Proot.Items.Add(mi);
             }
@@ -297,7 +298,7 @@ namespace AWSMonitor
         {
             var newtable = RawResults.Copy();
             string fxp = ""; // The string what will build our query.
-            if (FilterTagText.Text.Equals("")) return;
+            //if (FilterTagText.Text.Equals("")) return;
             string columntofilter = ColumnCombo.SelectedItem.ToString();
             if (fxp.Length > 2) fxp += " and ";
             else
@@ -311,8 +312,18 @@ namespace AWSMonitor
                 {
                     var row = newdt.NewRow();
                     row = element;
-                    newdt.ImportRow(row);
+                    string thisprofile = row["Profile"].ToString();
 
+                    bool isprofilechecked = (from System.Windows.Controls.MenuItem t in ProfilesMI.Items
+                                        where t.Header.Equals(thisprofile)
+                                        select t.IsChecked).FirstOrDefault();
+
+
+                    string daProfile = (string)row.Table.Columns[0].ToString();
+                    if(isprofilechecked)
+                    { 
+                    newdt.ImportRow(row);
+                    }
                 }
                 DaGrid.ItemsSource = newdt.AsDataView();
                 ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count + " of " + RawResults.Rows.Count;
@@ -347,153 +358,7 @@ namespace AWSMonitor
 
         private System.Windows.Controls.ContextMenu ECContext = new System.Windows.Controls.ContextMenu();
 
-        private void SSH_Click(object sender, EventArgs e)
-        {
-            string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            string puttyexe = @"C:\Program Files (x86)\PuTTY\putty.exe";
-            var rabbit = DaGrid.SelectedItem;// Get the datarowview
-            DataRowView bunny = (DataRowView)rabbit;
-            var hare = bunny.Row;
-            var TargetIP = hare["Pub IP"];
-            if (TargetIP.Equals("")) TargetIP = hare["Priv IP"];
-            
-            if(File.Exists(puttyexe)) //No point if not installed.
-            {
-               var PPKs = Directory.GetFiles(keydir, "*.ppk");
-                //Going to try each .ppk file in MyDocuments
-               foreach (var akeyfile in PPKs)
-               {
-                   try
-                   {
-                       string puttyargs = "-ssh -X -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
-                       var result = System.Diagnostics.Process.Start(puttyexe, puttyargs);
-                       System.Threading.Thread.Sleep(2000);
-                       //Look for a Putty Security Alert Window and hit the Y key.  Hacky, but it works.
-                       IntPtr puttywin = FindWindow(null, "PuTTY Security Alert");
-                       if (puttywin == IntPtr.Zero) ;
-                       else
-                       {
-                           SetForegroundWindow(puttywin);
-                           SendKeys.SendWait("y");
-                          
-                       }
 
-                       if(result.MainWindowTitle.Contains("ec2-user"))//Ugly, but we have to check if connected. Fails if we dont accept key in time.
-                       {
-                           break;
-                       }
-                       else
-                       {
-                           result.Kill();
-                       }
-                   }
-                   catch
-                   {
-
-                   }
-               }
-
-            }
-            else //Need to allow find at some point.  That means config file.  Sigh.
-            {
-                System.Windows.MessageBox.Show(@"C:\Program Files (x86)\PuTTY\putty.exe not found");
-            }
-            
-        }
-
-        private void SCP_Click(object sender, RoutedEventArgs e)
-        {
-            string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var rabbit = DaGrid.SelectedItem;// Get the datarowview
-            DataRowView bunny = (DataRowView)rabbit;
-            var hare = bunny.Row;
-            var TargetIP = hare["Pub IP"];
-            if(File.Exists("winscp.exe"))//Should be included in directory.
-            {
-
-                   var PPKs = Directory.GetFiles(keydir, "*.ppk");
-                //Going to try each .ppk file in MyDocuments
-               foreach (var akeyfile in PPKs)
-               {
-                   try
-                   {
-                       //string puttyargs = "-ssh -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
-                       string winscpargs = "scp://ec2-user@" + TargetIP + ":22 /privatekey=" + akeyfile ;
-                       var result = System.Diagnostics.Process.Start("winscp.exe", winscpargs);
-                       System.Threading.Thread.Sleep(3000);
-
-
-                       IntPtr winscperrorwin = FindWindow(null, "Warning");
-                       if (winscperrorwin == IntPtr.Zero) ;
-                       else
-                       {
-                           SetForegroundWindow(winscperrorwin);
-                           SendKeys.SendWait("Y");
-                           result.Kill();
-                       }
-
-
-                       //Look for a Winscp error  Window and hit the Enter key.  Hacky, but it works.
-                       winscperrorwin = FindWindow(null, "Error - WinSCP");
-                       if (winscperrorwin == IntPtr.Zero) ;
-                       else
-                       {
-                           SetForegroundWindow(winscperrorwin);
-                           SendKeys.SendWait("{ENTER}");
-                           result.Kill();
-                       }
-
-
-                       if(result.MainWindowTitle.Contains("ec2-user"))//Ugly, but we have to check if connected. Fails if we dont accept key in time.
-                       {
-                           break;
-                       }
-                       else
-                       {
-                           //result.Kill();
-                       }
-                   }
-                   catch
-                   {
-                      int error = 0;
-                   }
-                }
-
-            }
-            else
-            {
-                System.Windows.MessageBox.Show(@"WinSCP not found. Should be in same directory as this program.");
-            }
-           
-
-        }
-
-
-
-        private void FilepickerButton_Click(object sender, RoutedEventArgs e)
-        {
-            LocalFileTextbox.Text = Filepicker();
-        }
-
-        private void FileCopyButton_Click(object sender, RoutedEventArgs e)
-        {
-            var finalresult = "";
-            foreach(DataRowView belch in DaGrid.ItemsSource)
-            {
-                var rabbit = belch.Row.Field<string>("Pub DNS");
-                try
-                {
-                    var result = SFTPFileCopy(rabbit, "ec2-user", LocalFileTextbox.Text, EC2dirtoCopytoTextbox.Text);
-                    finalresult += "\n" + result;
-                }
-                catch
-                {
-                    finalresult += "\n Failed copy to " + rabbit;
-                }
-
-            }
-            System.Windows.Forms.MessageBox.Show(finalresult);
-        }
 
 
 /// <summary>
@@ -569,6 +434,153 @@ namespace AWSMonitor
 
 
         #region Event Handlers
+        private void SSH_Click(object sender, EventArgs e)
+        {
+            string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            string puttyexe = @"C:\Program Files (x86)\PuTTY\putty.exe";
+            var rabbit = DaGrid.SelectedItem;// Get the datarowview
+            DataRowView bunny = (DataRowView)rabbit;
+            var hare = bunny.Row;
+            var TargetIP = hare["Pub IP"];
+            if (TargetIP.Equals("")) TargetIP = hare["Priv IP"];
+
+            if (File.Exists(puttyexe)) //No point if not installed.
+            {
+                var PPKs = Directory.GetFiles(keydir, "*.ppk");
+                //Going to try each .ppk file in MyDocuments
+                foreach (var akeyfile in PPKs)
+                {
+                    try
+                    {
+                        string puttyargs = "-ssh -X -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
+                        var result = System.Diagnostics.Process.Start(puttyexe, puttyargs);
+                        System.Threading.Thread.Sleep(2000);
+                        //Look for a Putty Security Alert Window and hit the Y key.  Hacky, but it works.
+                        IntPtr puttywin = FindWindow(null, "PuTTY Security Alert");
+                        if (puttywin == IntPtr.Zero) ;
+                        else
+                        {
+                            SetForegroundWindow(puttywin);
+                            SendKeys.SendWait("y");
+
+                        }
+
+                        if (result.MainWindowTitle.Contains("ec2-user"))//Ugly, but we have to check if connected. Fails if we dont accept key in time.
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            result.Kill();
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+
+            }
+            else //Need to allow find at some point.  That means config file.  Sigh.
+            {
+                System.Windows.MessageBox.Show(@"C:\Program Files (x86)\PuTTY\putty.exe not found");
+            }
+
+        }
+
+        private void SCP_Click(object sender, RoutedEventArgs e)
+        {
+            string keydir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var rabbit = DaGrid.SelectedItem;// Get the datarowview
+            DataRowView bunny = (DataRowView)rabbit;
+            var hare = bunny.Row;
+            var TargetIP = hare["Pub IP"];
+            if (File.Exists("winscp.exe"))//Should be included in directory.
+            {
+
+                var PPKs = Directory.GetFiles(keydir, "*.ppk");
+                //Going to try each .ppk file in MyDocuments
+                foreach (var akeyfile in PPKs)
+                {
+                    try
+                    {
+                        //string puttyargs = "-ssh -i " + akeyfile + " ec2-user@" + TargetIP + " 22";
+                        string winscpargs = "scp://ec2-user@" + TargetIP + ":22 /privatekey=" + akeyfile;
+                        var result = System.Diagnostics.Process.Start("winscp.exe", winscpargs);
+                        System.Threading.Thread.Sleep(3000);
+
+
+                        IntPtr winscperrorwin = FindWindow(null, "Warning");
+                        if (winscperrorwin == IntPtr.Zero) ;
+                        else
+                        {
+                            SetForegroundWindow(winscperrorwin);
+                            SendKeys.SendWait("Y");
+                            result.Kill();
+                        }
+
+
+                        //Look for a Winscp error  Window and hit the Enter key.  Hacky, but it works.
+                        winscperrorwin = FindWindow(null, "Error - WinSCP");
+                        if (winscperrorwin == IntPtr.Zero) ;
+                        else
+                        {
+                            SetForegroundWindow(winscperrorwin);
+                            SendKeys.SendWait("{ENTER}");
+                            result.Kill();
+                        }
+
+
+                        if (result.MainWindowTitle.Contains("ec2-user"))//Ugly, but we have to check if connected. Fails if we dont accept key in time.
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            //result.Kill();
+                        }
+                    }
+                    catch
+                    {
+                        int error = 0;
+                    }
+                }
+
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(@"WinSCP not found. Should be in same directory as this program.");
+            }
+
+
+        }
+
+        private void FilepickerButton_Click(object sender, RoutedEventArgs e)
+        {
+            LocalFileTextbox.Text = Filepicker();
+        }
+
+        private void FileCopyButton_Click(object sender, RoutedEventArgs e)
+        {
+            var finalresult = "";
+            foreach (DataRowView belch in DaGrid.ItemsSource)
+            {
+                var rabbit = belch.Row.Field<string>("Pub DNS");
+                try
+                {
+                    var result = SFTPFileCopy(rabbit, "ec2-user", LocalFileTextbox.Text, EC2dirtoCopytoTextbox.Text);
+                    finalresult += "\n" + result;
+                }
+                catch
+                {
+                    finalresult += "\n Failed copy to " + rabbit;
+                }
+
+            }
+            System.Windows.Forms.MessageBox.Show(finalresult);
+        }
+
+
         private void CKAllPMI_Click(object sender, RoutedEventArgs e)
         {
             //Checks all Profilemenu items
@@ -576,6 +588,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = true;
             }
+            if (DaGrid.Items.Count > 0) DoFilter();
         }
 
         private void UCKAllPMI_Click(object sender, RoutedEventArgs e)
@@ -585,6 +598,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = false;
             }
+            if (DaGrid.Items.Count > 0) DoFilter();
         }
 
         private void CkAllRMI_Click(object sender, RoutedEventArgs e)
@@ -593,6 +607,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = true;
             }
+            if (DaGrid.Items.Count > 0) DoFilter();
         }
 
         private void UCkAllRMI_Click(object sender, RoutedEventArgs e)
@@ -601,6 +616,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = false;
             }
+            if (DaGrid.Items.Count > 0) DoFilter();
         }
 
         private void CkAllCMI_Click(object sender, RoutedEventArgs e)
@@ -609,6 +625,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = true;
             }
+            if (DaGrid.Items.Count > 0) DoFilter();
         }
 
         private void UCkAllCMI_Checked(object sender, RoutedEventArgs e)
@@ -617,6 +634,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = false;
             }
+            if (DaGrid.Items.Count > 0) DoFilter();
         }
 
         private void DaGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -694,7 +712,139 @@ namespace AWSMonitor
             ShowHideColumns();
         }
 
+        private void Export_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.MessageBox.Show("Export not yet implimented.");
+        }
+
+        private void FilterTagText_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            DoFilter();
+        }
+        private void LoadCred_Click(object sender, RoutedEventArgs e)
+        {
+            //Loading a credential file.
+            string results = "";
+            //Select file
+            string credfile = Filepicker("All Files|*.*");
+            //Import creds
+            var txt = File.ReadAllText(credfile);
+            Dictionary<string, Dictionary<string, string>> ini = new Dictionary<string, Dictionary<string, string>>(StringComparer.InvariantCultureIgnoreCase);
+
+            Dictionary<string, string> currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            ini[""] = currentSection;
+
+            foreach (var line in txt.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                       .Where(t => !string.IsNullOrWhiteSpace(t))
+                       .Select(t => t.Trim()))
+            {
+                if (line.StartsWith(";"))
+                    continue;
+
+                if (line.StartsWith("[") && line.EndsWith("]"))
+                {
+                    currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+                    ini[line.Substring(1, line.LastIndexOf("]") - 1)] = currentSection;
+                    continue;
+                }
+
+                var idx = line.IndexOf("=");
+                if (idx == -1)
+                    currentSection[line] = "";
+                else
+                    currentSection[line.Substring(0, idx)] = line.Substring(idx + 1);
+            }
+
+
+            //Amazon.Util.ProfileManager.RegisterProfile(newprofileName, newaccessKey, newsecretKey);
+
+            //Build a list of current keys to use to avoid dupes due to changed "profile" names.
+            Dictionary<string, string> currentaccesskeys = new Dictionary<string, string>();
+
+            foreach (var aprofilename in Amazon.Util.ProfileManager.ListProfileNames())
+            {
+                var acred = Amazon.Util.ProfileManager.GetAWSCredentials(aprofilename).GetCredentials();
+
+                currentaccesskeys.Add(aprofilename, acred.AccessKey);
+            }
+
+            foreach (KeyValuePair<string, Dictionary<string, string>> kvp in ini)
+            {
+                string newprofileName = "";
+                string newaccessKey = "";
+                string newsecretKey = "";
+                if (kvp.Key == "") continue;
+
+                newprofileName = kvp.Key.ToString();
+                newaccessKey = kvp.Value["aws_access_key_id"].ToString();
+                newsecretKey = kvp.Value["aws_secret_access_key"].ToString();
+
+
+                if (Amazon.Util.ProfileManager.ListProfileNames().Contains(newprofileName))
+                {
+                    var daP = Amazon.Util.ProfileManager.GetAWSCredentials(newprofileName).GetCredentials();
+                    if (daP.AccessKey == newaccessKey & daP.SecretKey == newsecretKey)
+                    {
+                        //dey da same
+                    }
+                    else
+                    {
+                        results += newprofileName + " keys do not match existing profile!\n";
+                    }
+
+                }
+                else //Profile does not exist by this name.  
+                {
+                    if (currentaccesskeys.Values.Contains(newaccessKey))//Do we already have that key?
+                    {
+                        //We are trying to enter a duplicate profile name for the same key. 
+                        string existingprofile = "";
+                        foreach (KeyValuePair<string, string> minikvp in currentaccesskeys)
+                        {
+                            if (minikvp.Value == newaccessKey)
+                            {
+                                existingprofile = minikvp.Key.ToString();
+                            }
+                        }
+
+                        results += newprofileName + " already exists as " + existingprofile + "\n";
+                    }
+                    else
+                    {
+                        if (newaccessKey.Length.Equals(20) & newsecretKey.Length.Equals(40))
+                        {
+                            results += newprofileName + " added to credential store!\n";
+                            //Amazon.Util.ProfileManager.RegisterProfile(newprofileName, newaccessKey, newsecretKey);
+                        }
+                        else
+                        {
+                            results += newprofileName + "'s keys are not the correct length!\n";
+                        }
+                    }
+                }
+
+            }
+            if (results.Equals(""))
+            {
+                string message = ini.Count.ToString() + " profiles in " + credfile + " already in credential store.";
+                System.Windows.MessageBox.Show(message, "Results");
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(results, "Results");
+            }
+
+        }
+
+        private void ProfileChecked(object sender, RoutedEventArgs e)
+        {
+            DoFilter();
+        }
+
         #endregion Eventhandlers
+
+
+
         public DataTable ScanProfile(ScanRequest Request)
         {
             Amazon.Runtime.AWSCredentials credential;
@@ -889,10 +1039,6 @@ namespace AWSMonitor
 
         }
 
-
-
-
-
         private void ShowHideColumns()
         {
             foreach (var anitem in DaGrid.Columns)
@@ -907,131 +1053,6 @@ namespace AWSMonitor
                 else anitem.Visibility = System.Windows.Visibility.Hidden;
             }
             
-        }
-
-        private void FilterTagText_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            DoFilter();
-        }
-
-        private void Export_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.MessageBox.Show("Export not yet implimented.");
-        }
-
-        private void LoadCred_Click(object sender, RoutedEventArgs e)
-        {
-            //Loading a credential file.
-            string results = "";
-            //Select file
-            string credfile = Filepicker("All Files|*.*");
-            //Import creds
-            var txt = File.ReadAllText(credfile);
-            Dictionary<string, Dictionary<string, string>> ini = new Dictionary<string, Dictionary<string, string>>(StringComparer.InvariantCultureIgnoreCase);
-
-            Dictionary<string, string> currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-            ini[""] = currentSection;
-
-            foreach (var line in txt.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                       .Where(t => !string.IsNullOrWhiteSpace(t))
-                       .Select(t => t.Trim()))
-            {
-                if (line.StartsWith(";"))
-                    continue;
-
-                if (line.StartsWith("[") && line.EndsWith("]"))
-                {
-                    currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-                    ini[line.Substring(1, line.LastIndexOf("]") - 1)] = currentSection;
-                    continue;
-                }
-
-                var idx = line.IndexOf("=");
-                if (idx == -1)
-                    currentSection[line] = "";
-                else
-                    currentSection[line.Substring(0, idx)] = line.Substring(idx + 1);
-            }
-
-
-            //Amazon.Util.ProfileManager.RegisterProfile(newprofileName, newaccessKey, newsecretKey);
-
-            //Build a list of current keys to use to avoid dupes due to changed "profile" names.
-            Dictionary<string, string> currentaccesskeys = new Dictionary<string,string>();
-             
-            foreach (var aprofilename in Amazon.Util.ProfileManager.ListProfileNames())
-            {
-                var acred=Amazon.Util.ProfileManager.GetAWSCredentials(aprofilename).GetCredentials();
-                
-                currentaccesskeys.Add(aprofilename,acred.AccessKey);
-            }
-
-            foreach(KeyValuePair<string,Dictionary<string,string>> kvp in ini)
-            {
-                string newprofileName = "";
-                string newaccessKey = "";
-                string newsecretKey = "";
-                if (kvp.Key=="") continue;
-
-                newprofileName = kvp.Key.ToString();
-                newaccessKey = kvp.Value["aws_access_key_id"].ToString();
-                newsecretKey = kvp.Value["aws_secret_access_key"].ToString();
-
-
-                if(Amazon.Util.ProfileManager.ListProfileNames().Contains(newprofileName))
-                {
-                    var daP = Amazon.Util.ProfileManager.GetAWSCredentials(newprofileName).GetCredentials();
-                    if(daP.AccessKey==newaccessKey & daP.SecretKey==newsecretKey)
-                    {
-                        //dey da same
-                    }
-                    else
-                    {
-                        results += newprofileName + " keys do not match existing profile!\n";
-                    }
-
-                }
-                else //Profile does not exist by this name.  
-                {                   
-                    if (currentaccesskeys.Values.Contains(newaccessKey))//Do we already have that key?
-                    {
-                        //We are trying to enter a duplicate profile name for the same key. 
-                        string existingprofile = "";
-                        foreach(KeyValuePair<string,string> minikvp in currentaccesskeys)
-                        {
-                            if (minikvp.Value == newaccessKey)
-                            {
-                                existingprofile = minikvp.Key.ToString();
-                            }
-                        }
-
-                        results += newprofileName + " already exists as " + existingprofile + "\n";
-                    }
-                    else
-                    {
-                        if (newaccessKey.Length.Equals(20) & newsecretKey.Length.Equals(40))
-                        {
-                            results += newprofileName + " added to credential store!\n";
-                            //Amazon.Util.ProfileManager.RegisterProfile(newprofileName, newaccessKey, newsecretKey);
-                        }
-                        else
-                        {
-                            results += newprofileName + "'s keys are not the correct length!\n";
-                        }
-                    }
-                }
-
-            }
-            if (results.Equals(""))
-            {
-                string message = ini.Count.ToString() + " profiles in " + credfile + " already in credential store.";
-                System.Windows.MessageBox.Show(message, "Results");
-            }
-            else
-            {
-                System.Windows.MessageBox.Show(results, "Results");
-            }
-
         }
 
         //endlc

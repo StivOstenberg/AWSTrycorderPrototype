@@ -31,7 +31,7 @@
                 <MenuItem x:Name="Export" Header="Export*" HorizontalAlignment="Left"  Click="Export_Click"/>
                 <MenuItem x:Name="LoadCred" Header="Load Credential File" HorizontalAlignment="Left" Click="LoadCred_Click"  />
             </MenuItem>
-            <MenuItem x:Name="ProfilesMI" Header="Profiles" StaysOpenOnClick="True">
+            <MenuItem x:Name="ProfilesMI" Header="Profiles" StaysOpenOnClick="True" >
                 <MenuItem x:Name="CKAllPMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="CKAllPMI_Click"/>
                 <MenuItem x:Name="UCKAllPMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCKAllPMI_Click"/>
 
