@@ -103,9 +103,8 @@ namespace AWSMonitor
                 mi.IsCheckable = true;
                 mi.Header = aregion;
                 mi.IsChecked = true;
+                mi.Click += ProfileChecked;
                 mi.StaysOpenOnClick = true;
-                
-
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[2];
                 Proot.Items.Add(mi);
             }
@@ -313,17 +312,35 @@ namespace AWSMonitor
                     var row = newdt.NewRow();
                     row = element;
                     string thisprofile = row["Profile"].ToString();
-
+                    string thisregion = row["Region"].ToString();
                     bool isprofilechecked = (from System.Windows.Controls.MenuItem t in ProfilesMI.Items
                                         where t.Header.Equals(thisprofile)
                                         select t.IsChecked).FirstOrDefault();
 
+                    bool isregionchecked = (from System.Windows.Controls.MenuItem t in RegionMI.Items
+                                             where t.Header.ToString().Equals(thisregion)
+                                             select t.IsChecked).FirstOrDefault();
+                    //-------------------------------------------------------------------------------------------
 
+
+                    
+                    var boobert = (from System.Windows.Controls.MenuItem t in RegionMI.Items
+                                            
+                                            select t.Header);
+
+                    //-------------------------------------------------------------------------------------------
                     string daProfile = (string)row.Table.Columns[0].ToString();
-                    if(isprofilechecked)
+
+                    if(!isregionchecked)
+                    {
+                        string rabbit = "filtered out!";
+                    }
+
+                    if(isprofilechecked & isregionchecked)
                     { 
                     newdt.ImportRow(row);
                     }
+
                 }
                 DaGrid.ItemsSource = newdt.AsDataView();
                 ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count + " of " + RawResults.Rows.Count;
@@ -909,7 +926,7 @@ namespace AWSMonitor
                         var istate = instat.InstanceState.Name;
                         
                         string profile = aprofile;
-                        string myregion = region.DisplayName + "  -  " + region.SystemName;
+                        string myregion = region.ToString();
                         int eventnumber = instat.Events.Count();
 
                         string eventlist = "";
