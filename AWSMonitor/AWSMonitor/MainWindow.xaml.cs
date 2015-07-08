@@ -462,17 +462,20 @@ namespace AWSMonitor
             if (TargetIP.Equals("")) TargetIP = myrow["Priv IP"];
 
 
-            return;
+            return;  //Not executing below code until I figure out how we shall manage the password going forward.
+
+
             Process rdcProcess = new Process();
+            
             //Try to save credentials
             rdcProcess.StartInfo.FileName = Environment.ExpandEnvironmentVariables(@"%SystemRoot%\system32\cmdkey.exe");
             //rdcProcess.StartInfo.Arguments = "/generic:TERMSRV/192.168.0.217 /user:" + "username" + " /pass:" + "password";
-            rdcProcess.StartInfo.Arguments = "/generic:TERMSRV/" + TargetIP;
+            rdcProcess.StartInfo.Arguments = "/generic:TERMSRV/" + TargetIP + " /user:" + "administrator" + " /pass:" + "password";
             rdcProcess.Start();
             
-            //tehn connect
+            //then connect
             rdcProcess.StartInfo.FileName = Environment.ExpandEnvironmentVariables(@"%SystemRoot%\system32\mstsc.exe");
-            rdcProcess.StartInfo.Arguments = "/v " + "192.168.0.217"; // ip or name of computer to connect
+            rdcProcess.StartInfo.Arguments = "/v " + TargetIP; // ip or name of computer to connect
             rdcProcess.Start();
 
 
