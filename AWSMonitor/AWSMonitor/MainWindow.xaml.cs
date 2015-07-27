@@ -122,7 +122,7 @@ namespace AWSMonitor
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[3];
                 Proot.Items.Add(mi);
             }
-            ColumnCombo.SelectedItem = "Tags";
+            ColumnCombo.SelectedItem = "_ANY_";
         }
 
 
