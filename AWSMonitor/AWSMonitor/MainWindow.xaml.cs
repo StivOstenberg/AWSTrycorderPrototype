@@ -108,6 +108,7 @@ namespace AWSMonitor
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[2];
                 Proot.Items.Add(mi);
             }
+            ColumnCombo.Items.Add("_ANY_");
             foreach(var acolumn in GetEC2StatusTable().Columns) //Set the Column Show Hide menu up
             {
                 ColumnCombo.Items.Add(acolumn.ToString());
@@ -295,16 +296,71 @@ namespace AWSMonitor
         }
         private void DoFilter()
         {
+            if (RawResults.Rows.Count < 1) return;
             var newtable = RawResults.Copy();
+            var newbie = RawResults.AsEnumerable();
+
             string fxp = ""; // The string what will build our query.
-            //if (FilterTagText.Text.Equals("")) return;
+            if (FilterTagText.Text.Equals(""))
+            {
+                newbie = RawResults.AsEnumerable();
+                return;
+            }
             string columntofilter = ColumnCombo.SelectedItem.ToString();
-            if (fxp.Length > 2) fxp += " and ";
+            bool anycolumn=false;
+            if (columntofilter.Equals("_ANY_"))
+            {
+                anycolumn = true;
+                columntofilter = "Tags";
+            }
+            
+
+            if (fxp.Length > 2) {
+                fxp += " and ";
+            }
             else
             {
-                var newbie = from record in RawResults.AsEnumerable()
-                             where record.Field<string>(columntofilter).Contains(FilterTagText.Text)
-                             select record;
+                if (anycolumn && !FilterTagText.Text.Equals(""))
+                {
+                    if (RawResults.Rows.Count < 1)
+                    {
+                       newbie=RawResults.AsEnumerable() ;
+
+                    }
+                    try
+                    {
+                        newbie = RawResults.AsEnumerable().Where(p => p.Field<string>("Profile").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Region").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Name").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("InstanceID").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("AvailabilityZone").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Platform").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Status").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Events").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("EventList").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Tags").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Priv IP").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Pub IP").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Pub DNS").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("State").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("vType").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("iType").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("SecurityGroups").Contains(FilterTagText.Text));
+                    }
+                    catch(Exception ex)
+                    {
+                        newbie = RawResults.AsEnumerable();
+                    }
+                }
+                else
+                {
+                    newbie = from record in RawResults.AsEnumerable()
+                                 where record.Field<string>(columntofilter).Contains(FilterTagText.Text)
+                                 select record;
+                }
+                
+
+
                 var newdt = GetEC2StatusTable();
                 int count = newbie.Count();
                 foreach (var element in newbie)
@@ -1056,6 +1112,7 @@ namespace AWSMonitor
                         var SGs = (from t in urtburgle
                                             where t.Instances[0].InstanceId.Equals(instanceid)
                                             select t.Instances[0].SecurityGroups);
+
                         string sglist = "";
 
 
@@ -1072,8 +1129,9 @@ namespace AWSMonitor
                             sglist = "_NONE!_";
                         }
                         //Add to table
+                        if (String.IsNullOrEmpty(sglist)) sglist = "NullOrEmpty";
 
-
+                        if (String.IsNullOrEmpty(instancename)) instancename = "";
                         string rabbit = profile+ myregion+ instancename+ instanceid+ AZ+ status+ eventnumber+ eventlist+ tags+ privvyIP+ publicIP+ publicDNS+ istate+ ivirtType+instancetype+ sglist;
 
                         MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
