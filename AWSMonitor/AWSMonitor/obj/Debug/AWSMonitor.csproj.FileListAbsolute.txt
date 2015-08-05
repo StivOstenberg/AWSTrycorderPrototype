@@ -53,7 +53,6 @@ C:\Users\s.ostenberg\Source\Repos\EC2EventMonitor\AWSMonitor\AWSMonitor\bin\Debu
 C:\Users\s.ostenberg\Source\Repos\EC2EventMonitor\AWSMonitor\AWSMonitor\bin\Debug\WinSCP.exe
 C:\Users\s.ostenberg\Source\Repos\EC2EventMonitor\AWSMonitor\AWSMonitor\bin\Debug\EC2EventMonitor.exe
 C:\Users\s.ostenberg\Source\Repos\EC2EventMonitor\AWSMonitor\AWSMonitor\bin\Debug\EC2EventMonitor.pdb
-C:\Users\s.ostenberg\Source\Repos\EC2EventMonitor\AWSMonitor\AWSMonitor\bin\Debug\AWSSDK.dll
 C:\Users\s.ostenberg\Source\Repos\EC2EventMonitor\AWSMonitor\AWSMonitor\bin\Debug\AWSSDK.xml
 C:\Users\s.ostenberg\Source\Repos\EC2EventMonitor\AWSMonitor\AWSMonitor\obj\Debug\AWSMonitor.csprojResolveAssemblyReference.cache
 C:\Users\s.ostenberg\Source\Repos\EC2EventMonitor\AWSMonitor\AWSMonitor\obj\Debug\MainWindow.baml

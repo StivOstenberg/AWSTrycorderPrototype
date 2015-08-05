@@ -301,11 +301,7 @@ namespace AWSMonitor
             var newbie = RawResults.AsEnumerable();
 
             string fxp = ""; // The string what will build our query.
-            if (FilterTagText.Text.Equals(""))
-            {
-                newbie = RawResults.AsEnumerable();
-                return;
-            }
+
             string columntofilter = ColumnCombo.SelectedItem.ToString();
             bool anycolumn=false;
             if (columntofilter.Equals("_ANY_"))
