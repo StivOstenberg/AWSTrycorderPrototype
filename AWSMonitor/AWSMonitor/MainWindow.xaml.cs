@@ -1,6 +1,7 @@
 ﻿using Amazon;
 using Amazon.EC2;
 using Amazon.EC2.Model;
+using Amazon.IdentityManagement;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -34,6 +35,7 @@ namespace AWSMonitor
     public partial class MainWindow : Window
     {
         public DataTable RawResults = GetEC2StatusTable();
+        public DataTable Users = GetUsersStatusTable();
 
         private delegate void UpdateProgressBarDelegate(System.Windows.DependencyProperty dp, Object value);
         UpdateProgressBarDelegate doupdatePbDelegate;
@@ -131,6 +133,7 @@ namespace AWSMonitor
         {
             // Here we create a DataTable .
             DataTable table = new DataTable();
+            table.Columns.Add("AccountID", typeof(string));
             table.Columns.Add("Profile", typeof(string));
             table.Columns.Add("Region", typeof(string));
             table.Columns.Add("Name", typeof(string));
@@ -151,10 +154,25 @@ namespace AWSMonitor
             return table;
         }
 
+        static DataTable GetUsersStatusTable()
+        {
+            // Here we create a DataTable .
+            DataTable table = new DataTable();
+            table.Columns.Add("Account", typeof(string));
+            table.Columns.Add("AccountID", typeof(string));
+            table.Columns.Add("Username", typeof(string));
+            table.Columns.Add("UserID", typeof(string));
+            table.Columns.Add("ARN", typeof(string));
+            table.Columns.Add("CreateDate", typeof(string));
+            table.Columns.Add("PasswordLastUsed", typeof(string));
+            return table;
+        }
+
 
 
         public class EC2Instance
         {
+            public string Account { get; set; }
             public string Profile { get; set; }
             public string Region { get; set; }
             public string Name { get; set; }
@@ -193,6 +211,7 @@ namespace AWSMonitor
 
         private void Process()
         {
+            Users = GetUsersStatusTable();
             ProgressBar1.Visibility = System.Windows.Visibility.Visible;
             DataTable MyDataTable = GetEC2StatusTable();
             TagFilterCombo.Items.Clear();
@@ -275,8 +294,8 @@ namespace AWSMonitor
             DaGrid.ItemsSource = MyDataTable.AsDataView();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             ProcessingLabel.Content  = "Results Displayed: " + RawResults.Rows.Count;
-
-            
+            int userfound = Users.Rows.Count;
+            int rabbit = 2;
             
         }
 
@@ -967,6 +986,34 @@ namespace AWSMonitor
             try
             {
                 credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
+                //Try to get the Account ID//
+
+                var iam = new AmazonIdentityManagementServiceClient(credential);
+                var gribble = iam.ListUsers().Users;
+                var accountid = gribble[0].Arn.Split(':')[4];//Get the ARN and extract the Account ID
+
+
+                foreach (var auser in gribble)
+                {
+                    
+                    string ausername = auser.UserName;
+                    string auserid = auser.UserId;
+                    string arn = auser.Arn;
+                    string createddate = auser.CreateDate.ToShortDateString() + " " + auser.CreateDate.ToShortTimeString();
+                    string plu = auser.PasswordLastUsed.ToShortDateString() + " " + auser.PasswordLastUsed.ToShortTimeString();
+
+
+
+                    Users.Rows.Add(aprofile,accountid, ausername, auserid, arn, createddate, plu);
+                }
+
+
+
+
+
+
+
+                //////////////////////////////////////////////////////////
                 var MyDataTable = GetEC2StatusTable();
                 //Foreach aregion
                 foreach (var aregion in regions2process)
@@ -1128,9 +1175,9 @@ namespace AWSMonitor
                         if (String.IsNullOrEmpty(sglist)) sglist = "NullOrEmpty";
 
                         if (String.IsNullOrEmpty(instancename)) instancename = "";
-                        string rabbit = profile+ myregion+ instancename+ instanceid+ AZ+ status+ eventnumber+ eventlist+ tags+ privvyIP+ publicIP+ publicDNS+ istate+ ivirtType+instancetype+ sglist;
+                        string rabbit = accountid+profile+ myregion+ instancename+ instanceid+ AZ+ status+ eventnumber+ eventlist+ tags+ privvyIP+ publicIP+ publicDNS+ istate+ ivirtType+instancetype+ sglist;
 
-                        MyDataTable.Rows.Add(profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
+                        MyDataTable.Rows.Add(accountid, profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
 
 
                     }
