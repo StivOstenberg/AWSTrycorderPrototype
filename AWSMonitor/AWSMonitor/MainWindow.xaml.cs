@@ -292,10 +292,11 @@ namespace AWSMonitor
 
             RawResults = MyDataTable;
             DaGrid.ItemsSource = MyDataTable.AsDataView();
+            UserGrid.ItemsSource = Users.AsDataView();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             ProcessingLabel.Content  = "Results Displayed: " + RawResults.Rows.Count;
-            int userfound = Users.Rows.Count;
-            int rabbit = 2;
+
+
             
         }
 
@@ -1231,6 +1232,16 @@ namespace AWSMonitor
                 else anitem.Visibility = System.Windows.Visibility.Hidden;
             }
             
+        }
+
+        private void EC2Tab_GotFocus(object sender, RoutedEventArgs e)
+        {
+            DoFilter();
+        }
+
+        private void EC2Tab_Loaded(object sender, RoutedEventArgs e)
+        {
+            DoFilter();
         }
 
         //endlc
