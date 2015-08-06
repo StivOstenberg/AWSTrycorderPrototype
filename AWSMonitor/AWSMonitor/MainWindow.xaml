@@ -8,8 +8,8 @@
             <ColumnDefinition Width="619*"/>
             <ColumnDefinition Width="326*"/>
         </Grid.ColumnDefinitions>
-        <Button x:Name="EC2EventScanButton" Content="Scan" HorizontalAlignment="Right" Margin="0,34,29.6,0" Width="53" Height="22" VerticalAlignment="Top" Click="EC2EventScanButton_Click" Grid.Column="2" ToolTip="Scan EC2 Instances"/>
-        <ProgressBar x:Name="ProgressBar1" HorizontalAlignment="Right" Margin="0,36,96.6,0" Width="121" Height="22" VerticalAlignment="Top" Grid.Column="2" ToolTip="Number of Regions to scan"/>
+        <Button x:Name="EC2EventScanButton" Content="Scan" HorizontalAlignment="Right" Margin="0,20,10.6,0" Width="53" Height="22" VerticalAlignment="Top" Click="EC2EventScanButton_Click" Grid.Column="2" ToolTip="Scan EC2 Instances"/>
+        <ProgressBar x:Name="ProgressBar1" HorizontalAlignment="Right" Margin="0,20,81.6,0" Width="121" Height="22" VerticalAlignment="Top" Grid.Column="2" ToolTip="Number of Regions to scan"/>
         <ComboBox x:Name="TagFilterCombo" Grid.Column="2" Margin="0,0,59.6,39.8" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="43" Height="22" SelectionChanged="TagFilterCombo_SelectionChanged" ToolTip="Add Tag to filter"/>
         <Label x:Name="TagFilterLabel" Content="Tags" Margin="0,0,107.6,39.8" VerticalAlignment="Bottom" Grid.Column="2" Height="26" HorizontalAlignment="Right" Width="41"/>
         <Button x:Name="DoFilterButton" Content="Go" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,10.6,10.8" VerticalAlignment="Bottom" Width="36" ToolTip="Apply Filter" Click="DoFilterButton_Click" Height="22" RenderTransformOrigin="3.85,0.645"/>
@@ -20,7 +20,7 @@
         <TextBox x:Name="LocalFileTextbox" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="23" Margin="23,0,0,38.8" TextWrapping="Wrap" Text="c:\" VerticalAlignment="Bottom" Width="515"/>
         <TextBox x:Name="EC2dirtoCopytoTextbox" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="23" Margin="23,0,0,10.8" TextWrapping="Wrap" Text="/tmp/" VerticalAlignment="Bottom" Width="471" ToolTip="Path to copy file to"/>
         <Button x:Name="FilepickerButton" Grid.ColumnSpan="2" Content="..." HorizontalAlignment="Left" Margin="565,0,0,37.8" Width="28" RenderTransformOrigin="0.054,-0.003" Height="22" VerticalAlignment="Bottom" Click="FilepickerButton_Click" ToolTip="Select local file to upload"/>
-        <Menu x:Name="MainMenu" Grid.ColumnSpan="3" Height="31" Margin="0,0,-0.4,0" VerticalAlignment="Top">
+        <Menu x:Name="MainMenu" Grid.ColumnSpan="3" Height="20" Margin="0,0,-0.4,0" VerticalAlignment="Top">
             <MenuItem x:Name="FileMenu" Header="File" >
                 <MenuItem x:Name="Export" Header="Export*" HorizontalAlignment="Left"  Click="Export_Click"/>
                 <MenuItem x:Name="LoadCred" Header="Load Credential File" HorizontalAlignment="Left" Click="LoadCred_Click"  />
@@ -38,16 +38,23 @@
                 <MenuItem x:Name="CkAllCMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="CkAllCMI_Click" />
                 <MenuItem x:Name="UCkAllCMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCkAllCMI_Checked" />
             </MenuItem>
-
+            <MenuItem x:Name="UserColumnsMI" Header="UserColumns">
+                <MenuItem x:Name="CkAllUserCMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="CkAllUserCMI_Click" />
+                <MenuItem x:Name="UCkAllUserCMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCkAllUserCMI_Checked" />
+            </MenuItem>
             <MenuItem x:Name="About_Menu_Item" Header="About"/>
-            <Label x:Name="ProcessingLabel" Content="." HorizontalAlignment="Left" Width="660" Height="30" VerticalAlignment="Top" FontSize="10"/>
+            <Label x:Name="ProcessingLabel" Content="." HorizontalAlignment="Left" Width="286" Height="40" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.841,4.133"/>
         </Menu>
         <ComboBox x:Name="ColumnCombo" Grid.Column="2" Margin="0,0,148.6,39.8" ToolTip="Column to Filter On" HorizontalAlignment="Right" Width="118" Height="22" VerticalAlignment="Bottom"/>
         <Label Content="FilterString" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,243.6,6.8" VerticalAlignment="Bottom" RenderTransformOrigin="0.427,-0.252" Height="26" Width="73"/>
-        <TabControl x:Name="TabControl" Grid.ColumnSpan="3" Margin="10,36,10.6,79.8" SelectionChanged="TabControl_SelectionChanged">
+        <TabControl x:Name="TabControl" Grid.ColumnSpan="3" Margin="10,25,10.6,68.8" SelectionChanged="TabControl_SelectionChanged">
             <TabItem x:Name="EC2Tab" Header="EC2 Instances" Grid.IsSharedSizeScope="True">
                 <Grid Background="#FFE5E5E5">
-                    <DataGrid x:Name="DaGrid" Margin="0,0,0.2,0.4" Loaded="DaGrid_Loaded" MouseRightButtonDown="DaGrid_MouseRightButtonDown" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="107*"/>
+                        <ColumnDefinition Width="808*"/>
+                    </Grid.ColumnDefinitions>
+                    <DataGrid x:Name="DaGrid" Margin="0,0,0.2,0.6" Loaded="DaGrid_Loaded" MouseRightButtonDown="DaGrid_MouseRightButtonDown" Grid.ColumnSpan="2" >
                         <DataGrid.ItemBindingGroup>
                             <BindingGroup/>
                         </DataGrid.ItemBindingGroup>
@@ -56,7 +63,7 @@
             </TabItem>
             <TabItem Header="Users">
                 <Grid Background="#FFE5E5E5">
-                    <DataGrid x:Name="UserGrid" Margin="0,0,0.2,-0.4"/>
+                    <DataGrid x:Name="UserGrid" Loaded="UserGrid_Loaded" Margin="0,0,0.2,-0.4"/>
                 </Grid>
             </TabItem>
         </TabControl>

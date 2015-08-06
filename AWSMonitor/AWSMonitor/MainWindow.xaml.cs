@@ -35,8 +35,23 @@ namespace AWSMonitor
     /// </summary>
     public partial class MainWindow : Window
     {
-        public DataTable RawResults = GetEC2StatusTable();
-        public DataTable Users = GetUsersStatusTable();
+        public DataTable RawEC2Results = GetEC2StatusTable();
+        public DataTable RawUsers = GetUsersStatusTable();
+        public List<string> defaultusercolumns = new List<string>()
+        {
+            "Account",
+            "AccountID",
+            "UserID",
+            "Username",
+            "ARN",
+            "PwdEnabled ",
+            "PwdLastUsed",
+            "MFA Active",
+            "AccountID",
+            "AccessKey1-Active",
+            "AccessKey1-LastUsedDate",
+            "AccessKey1-LastUsedService"
+        };
 
         private delegate void UpdateProgressBarDelegate(System.Windows.DependencyProperty dp, Object value);
         UpdateProgressBarDelegate doupdatePbDelegate;
@@ -76,6 +91,7 @@ namespace AWSMonitor
         public MainWindow()
         {
             DataTable MyDataTable = GetEC2StatusTable();
+            
             InitializeComponent();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             var Profiles = Amazon.Util.ProfileManager.ListProfileNames().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase);
@@ -89,12 +105,35 @@ namespace AWSMonitor
                 System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
                 mi.IsCheckable = true;
                 mi.Header = aProfile;
+                
                 mi.IsChecked = true;
                 mi.StaysOpenOnClick = true;
                 mi.Click += ProfileChecked;
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[1];
                 Proot.Items.Add(mi);
             }
+
+            foreach (var aUserField in RawUsers.Columns)
+            {
+                string thisfield = aUserField.ToString();
+                System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
+                mi.IsCheckable = true;
+                mi.Header = aUserField.ToString();
+                if(defaultusercolumns.Contains(thisfield))
+                { 
+                    mi.IsChecked = true; 
+                }
+                else
+                {
+                    mi.IsChecked = false;
+                }
+                mi.StaysOpenOnClick = true;
+                mi.Click += UserChecked;
+                System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[4];
+                Proot.Items.Add(mi);
+            }
+
+            ShowHideUserColumns();
 
             var Regions = RegionEndpoint.EnumerableAllRegions;
             foreach(var aregion in Regions)  //Build the Region Select Menu
@@ -236,7 +275,7 @@ namespace AWSMonitor
 
         private void Process()
         {
-            Users = GetUsersStatusTable();
+            RawUsers = GetUsersStatusTable();
             ProgressBar1.Visibility = System.Windows.Visibility.Visible;
             DataTable MyDataTable = GetEC2StatusTable();
             TagFilterCombo.Items.Clear();
@@ -315,11 +354,11 @@ namespace AWSMonitor
 
             
 
-            RawResults = MyDataTable;
+            RawEC2Results = MyDataTable;
             DaGrid.ItemsSource = MyDataTable.AsDataView();
-            UserGrid.ItemsSource = Users.AsDataView();
+            UserGrid.ItemsSource = RawUsers.AsDataView();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
-            ProcessingLabel.Content  = "Results Displayed: " + RawResults.Rows.Count;
+            ProcessingLabel.Content  = "Results Displayed: " + RawEC2Results.Rows.Count;
 
 
             
@@ -338,12 +377,13 @@ namespace AWSMonitor
         private void DoFilterButton_Click(object sender, RoutedEventArgs e)
         {
             DoEC2Filter();
+            DoUserFilter();
         }
         private void DoEC2Filter()
         {
-            if (RawResults.Rows.Count < 1) return;
-            var newtable = RawResults.Copy();
-            var newbie = RawResults.AsEnumerable();
+            if (RawEC2Results.Rows.Count < 1) return;
+            var newtable = RawEC2Results.Copy();
+            var newbie = RawEC2Results.AsEnumerable();
 
             string fxp = ""; // The string what will build our query.
 
@@ -363,14 +403,14 @@ namespace AWSMonitor
             {
                 if (anycolumn && !FilterTagText.Text.Equals(""))
                 {
-                    if (RawResults.Rows.Count < 1)
+                    if (RawEC2Results.Rows.Count < 1)
                     {
-                       newbie=RawResults.AsEnumerable() ;
+                       newbie=RawEC2Results.AsEnumerable() ;
 
                     }
                     try
                     {
-                        newbie = RawResults.AsEnumerable().Where(p => p.Field<string>("Profile").Contains(FilterTagText.Text) ||
+                        newbie = RawEC2Results.AsEnumerable().Where(p => p.Field<string>("Profile").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("Region").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("Name").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("InstanceID").Contains(FilterTagText.Text) ||
@@ -390,12 +430,12 @@ namespace AWSMonitor
                     }
                     catch(Exception ex)
                     {
-                        newbie = RawResults.AsEnumerable();
+                        newbie = RawEC2Results.AsEnumerable();
                     }
                 }
                 else
                 {
-                    newbie = from record in RawResults.AsEnumerable()
+                    newbie = from record in RawEC2Results.AsEnumerable()
                                  where record.Field<string>(columntofilter).Contains(FilterTagText.Text)
                                  select record;
                 }
@@ -440,16 +480,23 @@ namespace AWSMonitor
 
                 }
                 DaGrid.ItemsSource = newdt.AsDataView();
-                ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count + " of " + RawResults.Rows.Count;
+                ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count + " of " + RawEC2Results.Rows.Count;
             }
             ShowHideEC2Columns();
         }
 
+        private void DoUserFilter()
+        {
+            ShowHideUserColumns();
+        }
+
         private void ClearFilters_Click(object sender, RoutedEventArgs e)
         {
-            DaGrid.ItemsSource = RawResults.AsDataView();
+            DaGrid.ItemsSource = RawEC2Results.AsDataView();
             ProcessingLabel.Content = "Results Displayed: " + DaGrid.Items.Count;
+            UserGrid.ItemsSource = RawUsers.AsDataView();
             ShowHideEC2Columns();
+            ShowHideUserColumns();
         }
 
         private void DaGrid_Loaded(object sender, RoutedEventArgs e)
@@ -468,6 +515,11 @@ namespace AWSMonitor
 
             ECContext.Items.Add(SSH);
             ECContext.Items.Add(SCP);
+        }
+
+        private void UserGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            UserGrid.ItemsSource = GetUsersStatusTable().AsDataView();
         }
 
         private System.Windows.Controls.ContextMenu ECContext = new System.Windows.Controls.ContextMenu();
@@ -783,6 +835,26 @@ namespace AWSMonitor
             if (DaGrid.Items.Count > 0) DoEC2Filter();
         }
 
+
+        //------------------------------------------------------------------------------------------
+        private void CkAllUserCMI_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (System.Windows.Controls.MenuItem anitem in UserColumnsMI.Items)
+            {
+                if (anitem.IsCheckable) anitem.IsChecked = true;
+            }
+            if (UserGrid.Items.Count > 0) DoUserFilter();
+        }
+
+        private void UCkAllUserCMI_Checked(object sender, RoutedEventArgs e)
+        {
+            foreach (System.Windows.Controls.MenuItem anitem in UserColumnsMI.Items)
+            {
+                if (anitem.IsCheckable) anitem.IsChecked = false;
+            }
+            if (UserGrid.Items.Count > 0) DoUserFilter();
+        }
+
         private void DaGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             var cecil = DaGrid.SelectedItems.Count;
@@ -999,6 +1071,11 @@ namespace AWSMonitor
             DoEC2Filter();
         }
 
+        private void UserChecked(object sender, RoutedEventArgs e)
+        {
+            ShowHideUserColumns(); 
+        }
+
         #endregion Eventhandlers
 
 
@@ -1058,7 +1135,7 @@ namespace AWSMonitor
                         {
                             var arow = myStringRow.Split(",".ToCharArray()[0]);
 
-                            var newrow = new object[Users.Columns.Count];
+                            var newrow = new object[RawUsers.Columns.Count];
                             newrow[0] = aprofile;
                             newrow[1] = accountid;
                             newrow[2] = ""; //UserID not in report
@@ -1084,7 +1161,7 @@ namespace AWSMonitor
                             newrow[22] = arow[19];
                             newrow[23] = arow[20];
                             newrow[24] = arow[21];
-                            Users.Rows.Add(newrow);
+                            RawUsers.Rows.Add(newrow);
                             LUserTable.Rows.Add(newrow);
                             myStringRow = sr.ReadLine();
                         }
@@ -1111,14 +1188,14 @@ namespace AWSMonitor
                     {
                         if (myrow["ARN"].Equals(arn)) myrow["UserID"] = auserid;
                     }
-                    foreach (DataRow myrow in Users.Rows)
+                    foreach (DataRow myrow in RawUsers.Rows)
                     {
                         if (myrow["ARN"].Equals(arn)) myrow["UserID"] = auserid;
                     }
                     
 
 
-                  //  Users.Rows.Add(aprofile,accountid, ausername, auserid, arn, createddate, plu);
+                  //  RawUsers.Rows.Add(aprofile,accountid, ausername, auserid, arn, createddate, plu);
                 }
 
 
@@ -1347,6 +1424,22 @@ namespace AWSMonitor
                 else anitem.Visibility = System.Windows.Visibility.Hidden;
             }
             
+        }
+
+        private void ShowHideUserColumns()
+        {
+            foreach (var anitem in UserGrid.Columns)
+            {
+                string myheader = (string)anitem.Header;
+                //Check status in Column Menu
+                bool getcheckedstatus = (from System.Windows.Controls.MenuItem t in UserColumnsMI.Items
+                                         where t.Header.Equals(myheader)
+                                         select t.IsChecked).FirstOrDefault();
+
+                if (getcheckedstatus) anitem.Visibility = System.Windows.Visibility.Visible;
+                else anitem.Visibility = System.Windows.Visibility.Hidden;
+            }
+
         }
 
         private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
