@@ -39,9 +39,8 @@ namespace AWSMonitor
         public DataTable RawUsers = GetUsersStatusTable();
         public List<string> defaultusercolumns = new List<string>()
         {
-            "Account",
             "AccountID",
-            "UserID",
+            "AccountID",
             "Username",
             "ARN",
             "PwdEnabled ",
@@ -184,9 +183,9 @@ namespace AWSMonitor
             table.Columns.Add("Events", typeof(string));
             table.Columns.Add("EventList", typeof(string));
             table.Columns.Add("Tags", typeof(string));
-            table.Columns.Add("Priv IP", typeof(string));
-            table.Columns.Add("Pub IP", typeof(string));
-            table.Columns.Add("Pub DNS", typeof(string));
+            table.Columns.Add("Priv_IP", typeof(string));
+            table.Columns.Add("Pub_IP", typeof(string));
+            table.Columns.Add("Pub_DNS", typeof(string));
             table.Columns.Add("State", typeof(string));
             table.Columns.Add("vType", typeof(string));
             table.Columns.Add("iType", typeof(string));
@@ -198,8 +197,8 @@ namespace AWSMonitor
         {
             // Here we create a DataTable .
             DataTable table = new DataTable();
-            table.Columns.Add("Account", typeof(string));
             table.Columns.Add("AccountID", typeof(string));
+            table.Columns.Add("Profile", typeof(string));
             table.Columns.Add("UserID", typeof(string));
             //Information from Credential Report
             table.Columns.Add("Username", typeof(string));//user
@@ -236,20 +235,21 @@ namespace AWSMonitor
 
         public class EC2Instance
         {
-            public string Account { get; set; }
+            public string AccountID { get; set; }
             public string Profile { get; set; }
             public string Region { get; set; }
             public string Name { get; set; }
             public string InstanceID { get; set; }
             public string AvailabilityZone { get; set; }
+            public string Platform { get; set; }
             public string Status { get; set; }
             public string Events { get; set; }
             public string EventList { get; set; }
             public string Tags { get; set; }
 
-            public string PrivvyIP { get; set; }
+            public string Priv_IP { get; set; }
 
-            public string PubIP { get; set; }
+            public string Pub_IP { get; set; }
             public string PubDNS { get; set; }
             public string State { get; set; }
 
@@ -1090,7 +1090,7 @@ namespace AWSMonitor
             try
             {
                 credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
-                //Try to get the Account ID//
+                //Try to get the AccountID ID//
 
                 var iam = new AmazonIdentityManagementServiceClient(credential);
 
@@ -1098,7 +1098,7 @@ namespace AWSMonitor
                 string accountid = "";
                 try
                 {
-                    accountid = myUserList[0].Arn.Split(':')[4];//Get the ARN and extract the Account ID
+                    accountid = myUserList[0].Arn.Split(':')[4];//Get the ARN and extract the AccountID ID
                 }
                 catch(Exception ex)
                 {
@@ -1316,10 +1316,10 @@ namespace AWSMonitor
 
                         //Need more info for SSH and SCP...
 
-                        var privvyIP = (from t in urtburgle
+                        var Priv_IP = (from t in urtburgle
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].PrivateIpAddress).FirstOrDefault();
-                        if (String.IsNullOrEmpty(privvyIP)) privvyIP = "?";
+                        if (String.IsNullOrEmpty(Priv_IP)) Priv_IP = "?";
                         
                         var publicIP = (from t in urtburgle
                                         where t.Instances[0].InstanceId.Equals(instanceid)
@@ -1366,9 +1366,9 @@ namespace AWSMonitor
                         if (String.IsNullOrEmpty(sglist)) sglist = "NullOrEmpty";
 
                         if (String.IsNullOrEmpty(instancename)) instancename = "";
-                        string rabbit = accountid+profile+ myregion+ instancename+ instanceid+ AZ+ status+ eventnumber+ eventlist+ tags+ privvyIP+ publicIP+ publicDNS+ istate+ ivirtType+instancetype+ sglist;
+                        string rabbit = accountid+profile+ myregion+ instancename+ instanceid+ AZ+ status+ eventnumber+ eventlist+ tags+ Priv_IP+ publicIP+ publicDNS+ istate+ ivirtType+instancetype+ sglist;
 
-                        MyDataTable.Rows.Add(accountid, profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags,privvyIP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
+                        MyDataTable.Rows.Add(accountid, profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags,Priv_IP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
 
 
                     }
@@ -1420,8 +1420,14 @@ namespace AWSMonitor
                                         where t.Header.Equals(myheader)
                                         select t.IsChecked).FirstOrDefault();
 
-                if (getcheckedstatus) anitem.Visibility = System.Windows.Visibility.Visible;
-                else anitem.Visibility = System.Windows.Visibility.Hidden;
+                if (getcheckedstatus)
+                {
+                    anitem.Visibility = System.Windows.Visibility.Visible;
+                }
+                else
+                {
+                    anitem.Visibility = System.Windows.Visibility.Hidden;
+                }
             }
             
         }
