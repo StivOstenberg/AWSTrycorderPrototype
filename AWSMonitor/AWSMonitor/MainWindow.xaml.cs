@@ -2,6 +2,7 @@
 using Amazon.EC2;
 using Amazon.EC2.Model;
 using Amazon.IdentityManagement;
+using Amazon.IdentityManagement.Model;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -160,11 +161,35 @@ namespace AWSMonitor
             DataTable table = new DataTable();
             table.Columns.Add("Account", typeof(string));
             table.Columns.Add("AccountID", typeof(string));
-            table.Columns.Add("Username", typeof(string));
             table.Columns.Add("UserID", typeof(string));
-            table.Columns.Add("ARN", typeof(string));
-            table.Columns.Add("CreateDate", typeof(string));
-            table.Columns.Add("PasswordLastUsed", typeof(string));
+            //Information from Credential Report
+            table.Columns.Add("Username", typeof(string));//user
+            table.Columns.Add("ARN", typeof(string));//arn
+            table.Columns.Add("CreateDate", typeof(string));//user_creation_time
+            table.Columns.Add("PwdEnabled", typeof(string));//password_enabled
+            table.Columns.Add("PwdLastUsed", typeof(string));//password_last_used
+            table.Columns.Add("PwdLastChanged", typeof(string));//password_last_changed
+            table.Columns.Add("PwdNxtRotation", typeof(string));//password_next_rotation
+            table.Columns.Add("MFA Active", typeof(string));//mfa_active
+
+            table.Columns.Add("AccessKey1-Active", typeof(string));//access_key_1_active
+            table.Columns.Add("AccessKey1-Rotated", typeof(string));//access_key_1_last_rotated
+            table.Columns.Add("AccessKey1-LastUsedDate", typeof(string));//access_key_1_last_used_date
+            table.Columns.Add("AccessKey1-LastUsedRegion", typeof(string));//access_key_1_last_used_region
+            table.Columns.Add("AccessKey1-LastUsedService", typeof(string));//access_key_1_last_used_service
+
+            table.Columns.Add("AccessKey2-Active", typeof(string));//access_key_2_active
+            table.Columns.Add("AccessKey2-Rotated", typeof(string));//access_key_2_last_rotated
+            table.Columns.Add("AccessKey2-LastUsedDate", typeof(string));//access_key_2_last_used_date
+            table.Columns.Add("AccessKey2-LastUsedRegion", typeof(string));//access_key_2_last_used_region
+            table.Columns.Add("AccessKey2-LastUsedService", typeof(string));//access_key_2_last_used_service
+
+            table.Columns.Add("Cert1-Active", typeof(string));//cert_1_active
+            table.Columns.Add("Cert1-Rotated", typeof(string));//cert_1_last_rotated
+            table.Columns.Add("Cert2-Active", typeof(string));//cert_2_active
+            table.Columns.Add("Cert2-Rotated", typeof(string));//cert_2_last_rotated
+
+            
             return table;
         }
 
@@ -206,7 +231,7 @@ namespace AWSMonitor
         private void EC2EventScanButton_Click(object sender, RoutedEventArgs e)
         {
             Process();
-            DoFilter();
+            DoEC2Filter();
         }
 
         private void Process()
@@ -312,9 +337,9 @@ namespace AWSMonitor
 
         private void DoFilterButton_Click(object sender, RoutedEventArgs e)
         {
-            DoFilter();
+            DoEC2Filter();
         }
-        private void DoFilter()
+        private void DoEC2Filter()
         {
             if (RawResults.Rows.Count < 1) return;
             var newtable = RawResults.Copy();
@@ -417,14 +442,14 @@ namespace AWSMonitor
                 DaGrid.ItemsSource = newdt.AsDataView();
                 ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count + " of " + RawResults.Rows.Count;
             }
-            ShowHideColumns();
+            ShowHideEC2Columns();
         }
 
         private void ClearFilters_Click(object sender, RoutedEventArgs e)
         {
             DaGrid.ItemsSource = RawResults.AsDataView();
             ProcessingLabel.Content = "Results Displayed: " + DaGrid.Items.Count;
-            ShowHideColumns();
+            ShowHideEC2Columns();
         }
 
         private void DaGrid_Loaded(object sender, RoutedEventArgs e)
@@ -709,7 +734,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = true;
             }
-            if (DaGrid.Items.Count > 0) DoFilter();
+            if (DaGrid.Items.Count > 0) DoEC2Filter();
         }
 
         private void UCKAllPMI_Click(object sender, RoutedEventArgs e)
@@ -719,7 +744,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = false;
             }
-            if (DaGrid.Items.Count > 0) DoFilter();
+            if (DaGrid.Items.Count > 0) DoEC2Filter();
         }
 
         private void CkAllRMI_Click(object sender, RoutedEventArgs e)
@@ -728,7 +753,7 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = true;
             }
-            if (DaGrid.Items.Count > 0) DoFilter();
+            if (DaGrid.Items.Count > 0) DoEC2Filter();
         }
 
         private void UCkAllRMI_Click(object sender, RoutedEventArgs e)
@@ -737,25 +762,25 @@ namespace AWSMonitor
             {
                 if (anitem.IsCheckable) anitem.IsChecked = false;
             }
-            if (DaGrid.Items.Count > 0) DoFilter();
+            if (DaGrid.Items.Count > 0) DoEC2Filter();
         }
 
         private void CkAllCMI_Click(object sender, RoutedEventArgs e)
         {
-            foreach (System.Windows.Controls.MenuItem anitem in ColumnsMI.Items)
+            foreach (System.Windows.Controls.MenuItem anitem in Ec2ColumnsMI.Items)
             {
                 if (anitem.IsCheckable) anitem.IsChecked = true;
             }
-            if (DaGrid.Items.Count > 0) DoFilter();
+            if (DaGrid.Items.Count > 0) DoEC2Filter();
         }
 
         private void UCkAllCMI_Checked(object sender, RoutedEventArgs e)
         {
-            foreach (System.Windows.Controls.MenuItem anitem in ColumnsMI.Items)
+            foreach (System.Windows.Controls.MenuItem anitem in Ec2ColumnsMI.Items)
             {
                 if (anitem.IsCheckable) anitem.IsChecked = false;
             }
-            if (DaGrid.Items.Count > 0) DoFilter();
+            if (DaGrid.Items.Count > 0) DoEC2Filter();
         }
 
         private void DaGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -830,7 +855,7 @@ namespace AWSMonitor
             else
             {
                 System.Windows.Controls.MenuItem NS = new System.Windows.Controls.MenuItem();
-                NS.Header = "No selected rows";
+                NS.Header = "No selected arow";
                 ECContext.Items.Add(NS);
             }
         }
@@ -842,7 +867,7 @@ namespace AWSMonitor
 
         private void ColumnsClick(object sender, System.EventArgs e)
         {
-            ShowHideColumns();
+            ShowHideEC2Columns();
         }
 
         private void Export_Click(object sender, RoutedEventArgs e)
@@ -852,7 +877,7 @@ namespace AWSMonitor
 
         private void FilterTagText_TextChanged(object sender, TextChangedEventArgs e)
         {
-            DoFilter();
+            DoEC2Filter();
         }
         private void LoadCred_Click(object sender, RoutedEventArgs e)
         {
@@ -971,7 +996,7 @@ namespace AWSMonitor
 
         private void ProfileChecked(object sender, RoutedEventArgs e)
         {
-            DoFilter();
+            DoEC2Filter();
         }
 
         #endregion Eventhandlers
@@ -980,6 +1005,7 @@ namespace AWSMonitor
 
         public DataTable ScanProfile(ScanRequest Request)
         {
+            DataTable LUserTable = GetUsersStatusTable();
             Amazon.Runtime.AWSCredentials credential;
             var aprofile = Request.Profile;
             var regions2process = Request.Regions;
@@ -990,22 +1016,109 @@ namespace AWSMonitor
                 //Try to get the Account ID//
 
                 var iam = new AmazonIdentityManagementServiceClient(credential);
-                var gribble = iam.ListUsers().Users;
-                var accountid = gribble[0].Arn.Split(':')[4];//Get the ARN and extract the Account ID
 
-
-                foreach (var auser in gribble)
+                var myUserList = iam.ListUsers().Users;
+                string accountid = "";
+                try
                 {
+                    accountid = myUserList[0].Arn.Split(':')[4];//Get the ARN and extract the Account ID
+                }
+                catch(Exception ex)
+                {
+                    accountid = "?";
+                }
+
+                try // Send command to AWS to generate a Credential Report
+                { var createcredreport = iam.GenerateCredentialReport();  }
+                catch (Exception)
+                { throw; }
+
+                bool needreport=true;
+
+                Amazon.IdentityManagement.Model.GetCredentialReportResponse credreport = new GetCredentialReportResponse();
+                DateTime getreportstart = DateTime.Now;
+                DateTime getreportfinish = DateTime.Now;
+                while (needreport)
+                {
+                    try
+                    {
+                        credreport = iam.GetCredentialReport();
+                        needreport = false;
+                        getreportfinish = DateTime.Now;
+                        var dif = getreportstart - getreportfinish;  //Just a check on how long it takes.
+
+
+                        //Extract data from CSV Stream into DataTable
+                        var streambert = credreport.Content;
+                        streambert.Position = 0;
+                        StreamReader sr = new StreamReader(streambert);
+                        string myStringRow = sr.ReadLine();
+                         if(myStringRow!=null) myStringRow = sr.ReadLine();//Dump the header line
+                        while (myStringRow != null) 
+                        {
+                            var arow = myStringRow.Split(",".ToCharArray()[0]);
+
+                            var newrow = new object[Users.Columns.Count];
+                            newrow[0] = aprofile;
+                            newrow[1] = accountid;
+                            newrow[2] = ""; //UserID not in report
+                            newrow[3] = arow[0];
+                            newrow[4] = arow[1];
+                            newrow[5] = arow[2];
+                            newrow[6] = arow[3];
+                            newrow[7] = arow[4];
+                            newrow[8] = arow[5];
+                            newrow[9] = arow[6];
+                            newrow[10] = arow[7];
+                            newrow[11] = arow[8];
+                            newrow[12] = arow[9];
+                            newrow[13] = arow[10];
+                            newrow[14] = arow[11];
+                            newrow[15] = arow[12];
+                            newrow[16] = arow[13];
+                            newrow[17] = arow[14];
+                            newrow[18] = arow[15];
+                            newrow[19] = arow[16];
+                            newrow[20] = arow[17];
+                            newrow[21] = arow[18];
+                            newrow[22] = arow[19];
+                            newrow[23] = arow[20];
+                            newrow[24] = arow[21];
+                            Users.Rows.Add(newrow);
+                            LUserTable.Rows.Add(newrow);
+                            myStringRow = sr.ReadLine();
+                        }
+                        sr.Close();
+                        sr.Dispose();
+
+
+                    }
+                    catch (Exception ex)
+                    {
+                        string test = "";
+                       //Deal with this later if necessary.
+                    }
+                }
+
+
+
+                foreach (var auser in myUserList)//Fill in the userID.  Why?  because it exists.
+                {
+                   string auserid = auser.UserId;
+                   string arn = auser.Arn;
+
+                    foreach(DataRow myrow in LUserTable.Rows)
+                    {
+                        if (myrow["ARN"].Equals(arn)) myrow["UserID"] = auserid;
+                    }
+                    foreach (DataRow myrow in Users.Rows)
+                    {
+                        if (myrow["ARN"].Equals(arn)) myrow["UserID"] = auserid;
+                    }
                     
-                    string ausername = auser.UserName;
-                    string auserid = auser.UserId;
-                    string arn = auser.Arn;
-                    string createddate = auser.CreateDate.ToShortDateString() + " " + auser.CreateDate.ToShortTimeString();
-                    string plu = auser.PasswordLastUsed.ToShortDateString() + " " + auser.PasswordLastUsed.ToShortTimeString();
 
 
-
-                    Users.Rows.Add(aprofile,accountid, ausername, auserid, arn, createddate, plu);
+                  //  Users.Rows.Add(aprofile,accountid, ausername, auserid, arn, createddate, plu);
                 }
 
 
@@ -1199,7 +1312,7 @@ namespace AWSMonitor
                 System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[1];
                 foreach(System.Windows.Controls.MenuItem amenuitem in Proot.Items)
                 {
-                    if(amenuitem.Header==aprofile)
+                    if(amenuitem.Header.ToString()==aprofile.ToString())
                     {
                         amenuitem.IsCheckable = false;
                         amenuitem.IsChecked = false;
@@ -1218,13 +1331,15 @@ namespace AWSMonitor
 
         }
 
-        private void ShowHideColumns()
+
+
+        private void ShowHideEC2Columns()
         {
             foreach (var anitem in DaGrid.Columns)
             {
                 string myheader = (string)anitem.Header;
                 //Check status in Column Menu
-                bool getcheckedstatus = (from System.Windows.Controls.MenuItem t in ColumnsMI.Items
+                bool getcheckedstatus = (from System.Windows.Controls.MenuItem t in Ec2ColumnsMI.Items
                                         where t.Header.Equals(myheader)
                                         select t.IsChecked).FirstOrDefault();
 
@@ -1234,15 +1349,13 @@ namespace AWSMonitor
             
         }
 
-        private void EC2Tab_GotFocus(object sender, RoutedEventArgs e)
+        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            DoFilter();
+            DoEC2Filter();
         }
 
-        private void EC2Tab_Loaded(object sender, RoutedEventArgs e)
-        {
-            DoFilter();
-        }
+
+
 
         //endlc
     }

@@ -34,7 +34,7 @@
                 <MenuItem x:Name="CkAllRMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="CkAllRMI_Click"/>
                 <MenuItem x:Name="UCkAllRMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCkAllRMI_Click"/>
             </MenuItem>
-            <MenuItem x:Name="ColumnsMI" Header="Columns">
+            <MenuItem x:Name="Ec2ColumnsMI" Header="EC2Columns">
                 <MenuItem x:Name="CkAllCMI" Header="Check All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="CkAllCMI_Click" />
                 <MenuItem x:Name="UCkAllCMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCkAllCMI_Checked" />
             </MenuItem>
@@ -44,8 +44,8 @@
         </Menu>
         <ComboBox x:Name="ColumnCombo" Grid.Column="2" Margin="0,0,148.6,39.8" ToolTip="Column to Filter On" HorizontalAlignment="Right" Width="118" Height="22" VerticalAlignment="Bottom"/>
         <Label Content="FilterString" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,243.6,6.8" VerticalAlignment="Bottom" RenderTransformOrigin="0.427,-0.252" Height="26" Width="73"/>
-        <TabControl Grid.ColumnSpan="3" Margin="10,36,10.6,79.8">
-            <TabItem x:Name="EC2Tab" Header="EC2 Instances" Grid.IsSharedSizeScope="True" GotFocus="EC2Tab_GotFocus" Loaded="EC2Tab_Loaded">
+        <TabControl x:Name="TabControl" Grid.ColumnSpan="3" Margin="10,36,10.6,79.8" SelectionChanged="TabControl_SelectionChanged">
+            <TabItem x:Name="EC2Tab" Header="EC2 Instances" Grid.IsSharedSizeScope="True">
                 <Grid Background="#FFE5E5E5">
                     <DataGrid x:Name="DaGrid" Margin="0,0,0.2,0.4" Loaded="DaGrid_Loaded" MouseRightButtonDown="DaGrid_MouseRightButtonDown" >
                         <DataGrid.ItemBindingGroup>
