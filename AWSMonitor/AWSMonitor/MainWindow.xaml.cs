@@ -410,7 +410,8 @@ namespace AWSMonitor
                     }
                     try
                     {
-                        newbie = RawEC2Results.AsEnumerable().Where(p => p.Field<string>("Profile").Contains(FilterTagText.Text) ||
+                        newbie = RawEC2Results.AsEnumerable().Where(p => p.Field<string>("AccountID").Contains(FilterTagText.Text) || 
+                                                                          p.Field<string>("Profile").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("Region").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("Name").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("InstanceID").Contains(FilterTagText.Text) ||
@@ -1184,13 +1185,23 @@ namespace AWSMonitor
                    string auserid = auser.UserId;
                    string arn = auser.Arn;
 
+
+                    //Need to get policy and group info outta user
+
+
                     foreach(DataRow myrow in LUserTable.Rows)
                     {
-                        if (myrow["ARN"].Equals(arn)) myrow["UserID"] = auserid;
+                        if (myrow["ARN"].Equals(arn))
+                        {
+                            myrow["UserID"] = auserid;
+                        }
                     }
                     foreach (DataRow myrow in RawUsers.Rows)
                     {
-                        if (myrow["ARN"].Equals(arn)) myrow["UserID"] = auserid;
+                        if (myrow["ARN"].Equals(arn))
+                        {
+                            myrow["UserID"] = auserid;
+                        }
                     }
                     
 
