@@ -40,16 +40,15 @@ namespace AWSMonitor
         public List<string> defaultusercolumns = new List<string>()
         {
             "AccountID",
-            "AccountID",
             "Username",
             "ARN",
             "PwdEnabled ",
             "PwdLastUsed",
             "MFA Active",
-            "AccountID",
-            "AccessKey1-Active",
-            "AccessKey1-LastUsedDate",
-            "AccessKey1-LastUsedService"
+            "AccessKey1-LastUsedService",
+            "Policy-List",
+            "Access-Keys"
+            
         };
 
         private delegate void UpdateProgressBarDelegate(System.Windows.DependencyProperty dp, Object value);
@@ -226,6 +225,9 @@ namespace AWSMonitor
             table.Columns.Add("Cert1-Rotated", typeof(string));//cert_1_last_rotated
             table.Columns.Add("Cert2-Active", typeof(string));//cert_2_active
             table.Columns.Add("Cert2-Rotated", typeof(string));//cert_2_last_rotated
+
+            table.Columns.Add("User-Policies", typeof(string));
+            table.Columns.Add("Access-Keys", typeof(string));
 
             
             return table;
@@ -1137,8 +1139,8 @@ namespace AWSMonitor
                             var arow = myStringRow.Split(",".ToCharArray()[0]);
 
                             var newrow = new object[RawUsers.Columns.Count];
-                            newrow[0] = aprofile;
-                            newrow[1] = accountid;
+                            newrow[0] = accountid;
+                            newrow[1] = aprofile;
                             newrow[2] = ""; //UserID not in report
                             newrow[3] = arow[0];
                             newrow[4] = arow[1];
@@ -1178,12 +1180,43 @@ namespace AWSMonitor
                     }
                 }
 
-
+      
 
                 foreach (var auser in myUserList)//Fill in the userID.  Why?  because it exists.
                 {
                    string auserid = auser.UserId;
                    string arn = auser.Arn;
+                   string username = auser.UserName;
+                   string policylist = "";
+                   string aklist = "";
+
+                   ListAccessKeysRequest LAKREQ = new ListAccessKeysRequest();
+                   LAKREQ.UserName = username;
+                   ListAccessKeysResult LAKRES = iam.ListAccessKeys(LAKREQ);
+                   foreach(var blivet in LAKRES.AccessKeyMetadata)
+                   {
+                       if (aklist.Length > 1) aklist += "\n";
+                       aklist += blivet.AccessKeyId + "  :  " + blivet.Status;
+                   }
+
+
+
+                    ListAttachedUserPoliciesRequest LAUPREQ = new ListAttachedUserPoliciesRequest();
+                    LAUPREQ.UserName = username;
+                    ListAttachedUserPoliciesResult LAUPRES = iam.ListAttachedUserPolicies(LAUPREQ);
+                    foreach(var apol in LAUPRES.AttachedPolicies)
+                    {
+                        if (policylist.Length > 1) aklist += "\n";
+                        policylist += apol.PolicyName;
+                    }
+
+
+
+
+
+
+
+
 
 
                     //Need to get policy and group info outta user
@@ -1194,6 +1227,8 @@ namespace AWSMonitor
                         if (myrow["ARN"].Equals(arn))
                         {
                             myrow["UserID"] = auserid;
+                            myrow["User-Policies"] = policylist;
+                            myrow["Access-Keys"] = aklist;
                         }
                     }
                     foreach (DataRow myrow in RawUsers.Rows)
@@ -1201,12 +1236,10 @@ namespace AWSMonitor
                         if (myrow["ARN"].Equals(arn))
                         {
                             myrow["UserID"] = auserid;
+                            myrow["User-Policies"] = policylist;
+                            myrow["Access-Keys"] = aklist;
                         }
-                    }
-                    
-
-
-                  //  RawUsers.Rows.Add(aprofile,accountid, ausername, auserid, arn, createddate, plu);
+                    }                   
                 }
 
 
