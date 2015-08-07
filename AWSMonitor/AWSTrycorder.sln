@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AWSMonitor", "AWSMonitor\AWSMonitor.csproj", "{35744A45-7136-4AA3-9F86-BF208BF50924}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AWSTrycorder", "AWSMonitor\AWSTrycorder.csproj", "{35744A45-7136-4AA3-9F86-BF208BF50924}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

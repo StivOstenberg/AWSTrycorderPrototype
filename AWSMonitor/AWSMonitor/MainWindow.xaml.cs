@@ -423,9 +423,9 @@ namespace AWSMonitor
                                                                           p.Field<string>("Events").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("EventList").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("Tags").Contains(FilterTagText.Text) ||
-                                                                          p.Field<string>("Priv IP").Contains(FilterTagText.Text) ||
-                                                                          p.Field<string>("Pub IP").Contains(FilterTagText.Text) ||
-                                                                          p.Field<string>("Pub DNS").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Priv_IP").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Pub_IP").Contains(FilterTagText.Text) ||
+                                                                          p.Field<string>("Pub_DNS").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("State").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("vType").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("iType").Contains(FilterTagText.Text) ||
@@ -497,9 +497,7 @@ namespace AWSMonitor
         {
             DaGrid.ItemsSource = RawEC2Results.AsDataView();
             ProcessingLabel.Content = "Results Displayed: " + DaGrid.Items.Count;
-            UserGrid.ItemsSource = RawUsers.AsDataView();
             ShowHideEC2Columns();
-            ShowHideUserColumns();
         }
 
         private void DaGrid_Loaded(object sender, RoutedEventArgs e)
@@ -894,8 +892,8 @@ namespace AWSMonitor
                     var rabbit = DaGrid.SelectedItem;// Get the datarowview
                     DataRowView bunny = (DataRowView)rabbit;
                     var hare = bunny.Row;
-                    var mypubip = hare["Pub IP"];
-                    if (mypubip.Equals(""))  mypubip=hare["Priv IP"];
+                    var mypubip = hare["Pub_IP"];
+                    if (mypubip.Equals(""))  mypubip=hare["Priv_IP"];
                     var hassenpfeffer = hare["Platform"];
                     //Build context Menus
 
@@ -1495,6 +1493,13 @@ namespace AWSMonitor
         private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             DoEC2Filter();
+            DoUserFilter();
+        }
+
+        private void ClearFilters_Copy_Click(object sender, RoutedEventArgs e)
+        {
+            UserGrid.ItemsSource = RawUsers.AsDataView();
+            ShowHideUserColumns();
         }
 
 

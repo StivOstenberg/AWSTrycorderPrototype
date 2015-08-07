@@ -60,7 +60,7 @@
             <TabItem x:Name="UserTab" Header="Users" ToolTip="User Details">
                 <Grid x:Name="UserGrid1" Background="#FFE5E5E5">
                     <DataGrid x:Name="UserGrid" Loaded="UserGrid_Loaded" Margin="0,0,-0.2,57.4"/>
-                    <Button x:Name="ClearFilters_Copy" Content="Clr" HorizontalAlignment="Right" Margin="0,0,9.8,28.4" VerticalAlignment="Bottom" Width="36" ToolTip="Remove applied filters" IsEnabled="True" Height="22" RenderTransformOrigin="0.917,0.609"/>
+                    <Button x:Name="ClearFilters_Copy" Content="Clr" HorizontalAlignment="Right" Margin="0,0,9.8,28.4" VerticalAlignment="Bottom" Width="36" ToolTip="Remove applied filters" IsEnabled="True" Height="22" RenderTransformOrigin="0.917,0.609" Click="ClearFilters_Copy_Click"/>
                     <Label Content="FilterField" HorizontalAlignment="Right" Margin="0,0,242.8,26.4" VerticalAlignment="Bottom" RenderTransformOrigin="0.427,-0.252" Height="26" Width="64"/>
                     <ComboBox x:Name="UserFilterFieldCombo" Margin="0,0,128.8,28.4" ToolTip="Column to Filter On" HorizontalAlignment="Right" Width="118" Height="22" VerticalAlignment="Bottom"/>
                     <TextBox x:Name="UserFilterString" HorizontalAlignment="Right" Height="23" Margin="0,0,62.8,0.4" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="179" TextChanged="FilterTagText_TextChanged"/>
