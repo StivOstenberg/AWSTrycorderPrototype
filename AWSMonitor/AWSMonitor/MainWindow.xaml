@@ -12,7 +12,7 @@
         <ProgressBar x:Name="ProgressBar1" HorizontalAlignment="Right" Margin="0,20,81.6,0" Width="121" Height="22" VerticalAlignment="Top" Grid.Column="2" ToolTip="Number of Regions to scan"/>
         <Menu x:Name="MainMenu" Grid.ColumnSpan="3" Height="20" Margin="0,0,-0.4,0" VerticalAlignment="Top">
             <MenuItem x:Name="FileMenu" Header="File" >
-                <MenuItem x:Name="Export" Header="Export*" HorizontalAlignment="Left"  Click="Export_Click"/>
+                <MenuItem x:Name="ExportExcel" Header="Export to Excel" HorizontalAlignment="Left"  Click="ExportAll_Click"/>
                 <MenuItem x:Name="LoadCred" Header="Load Credential File" HorizontalAlignment="Left" Click="LoadCred_Click"  />
             </MenuItem>
             <MenuItem x:Name="ProfilesMI" Header="Profiles" StaysOpenOnClick="True" >

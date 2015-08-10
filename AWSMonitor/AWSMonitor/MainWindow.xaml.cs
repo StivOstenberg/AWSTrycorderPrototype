@@ -38,6 +38,8 @@ namespace AWSMonitor
     {
         public DataTable RawEC2Results = GetEC2StatusTable();
         public DataTable RawUsers = GetUsersStatusTable();
+
+        //Just defining a default filter to avoid data overload.
         public List<string> defaultusercolumns = new List<string>()
         {
             "AccountID",
@@ -62,7 +64,18 @@ namespace AWSMonitor
         [System.Runtime.InteropServices.DllImport("USER32.DLL", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         static extern bool SetForegroundWindow(IntPtr hWnd);
 
-
+        public string saveas()
+        {
+            SaveFileDialog _SD = new SaveFileDialog();
+            _SD.Filter = "Excel File (*.xls)|*.xls*";
+            _SD.FileName = "TrycorderOut";
+            _SD.Title = "Save As";
+            if (_SD.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                return(_SD.FileName);
+            }
+            return "";
+        }
 
         public string Filepicker()
         {
@@ -485,6 +498,7 @@ namespace AWSMonitor
                 }
                 DaGrid.ItemsSource = newdt.AsDataView();
                 ProcessingLabel.Content = "Filtered Results Displayed: " + newdt.Rows.Count + " of " + RawEC2Results.Rows.Count;
+                
             }
             ShowHideEC2Columns();
         }
@@ -944,9 +958,13 @@ namespace AWSMonitor
             ShowHideEC2Columns();
         }
 
-        private void Export_Click(object sender, RoutedEventArgs e)
+        private void ExportAll_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.MessageBox.Show("Export not yet implimented.");
+            var outputfile = saveas();
+            Dictionary<string, DataTable> mydata = new Dictionary<string, DataTable>();
+            mydata.Add("Users", RawUsers);
+            mydata.Add("EC2 Instances", RawEC2Results);
+            ExportToExcel(mydata, outputfile);
         }
 
         private void FilterTagText_TextChanged(object sender, TextChangedEventArgs e)
@@ -1140,7 +1158,7 @@ namespace AWSMonitor
                             var newrow = new object[RawUsers.Columns.Count];
                             newrow[0] = accountid;
                             newrow[1] = aprofile;
-                            newrow[2] = ""; //UserID not in report
+                            newrow[2] = ""; //UserID not in report. pull it later.
                             newrow[3] = arow[0];
                             newrow[4] = arow[1];
                             newrow[5] = arow[2];
@@ -1501,55 +1519,77 @@ namespace AWSMonitor
         {
             UserGrid.ItemsSource = RawUsers.AsDataView();
             ShowHideUserColumns();
+
         }
 
 
 
 
         //endlc
-        private void ExportToExcel(DataTable DataTable, string ExcelFilePath = null)
+        
+
+        private void ExportToExcel(Dictionary<string,DataTable> DataTables, string ExcelFilePath)
         {
+
             try
             {
-                int ColumnsCount;
-
-                if (DataTable == null || (ColumnsCount = DataTable.Columns.Count) == 0)
-                    throw new Exception("ExportToExcel: Null or empty input table!\n");
-
-                // load excel, and create a new workbook
                 Microsoft.Office.Interop.Excel.Application Excel = new Microsoft.Office.Interop.Excel.Application();
-                Excel.Workbooks.Add();
+                // load excel, and create a new workbook
+                var wb = Excel.Workbooks.Add();
 
-                // single worksheet
-                Microsoft.Office.Interop.Excel._Worksheet Worksheet = Excel.ActiveSheet;
 
-                object[] Header = new object[ColumnsCount];
+                foreach (string DT2WS in DataTables.Keys)
+                {
+                    wb.Sheets.Add();
+                    int ColumnsCount;
+                    var aDT = DataTables[DT2WS];
 
-                // column headings               
-                for (int i = 0; i < ColumnsCount; i++)
-                    Header[i] = DataTable.Columns[i].ColumnName;
+                    if (aDT == null || (ColumnsCount = aDT.Columns.Count) == 0)
+                        throw new Exception("ExportToExcel: Null or empty input table!\n");
 
-                Microsoft.Office.Interop.Excel.Range HeaderRange = Worksheet.get_Range((Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[1, 1]), (Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[1, ColumnsCount]));
-                HeaderRange.Value = Header;
-                //HeaderRange.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.LightGray);
-                HeaderRange.Font.Bold = true;
+                    // single worksheet
+                    Microsoft.Office.Interop.Excel._Worksheet Worksheet = Excel.ActiveSheet;
+                    Worksheet.Name = DT2WS;
 
-                // DataCells
-                int RowsCount = DataTable.Rows.Count;
-                object[,] Cells = new object[RowsCount, ColumnsCount];
+                    object[] Header = new object[ColumnsCount];
 
-                for (int j = 0; j < RowsCount; j++)
+                    // column headings               
                     for (int i = 0; i < ColumnsCount; i++)
-                        Cells[j, i] = DataTable.Rows[j][i];
+                    { 
+                        Header[i] = aDT.Columns[i].ColumnName;
+                     }
 
-                Worksheet.get_Range((Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[2, 1]), (Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[RowsCount + 1, ColumnsCount])).Value = Cells;
+                    Microsoft.Office.Interop.Excel.Range HeaderRange = Worksheet.get_Range((Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[1, 1]), (Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[1, ColumnsCount]));
+                    HeaderRange.Value = Header;
+                    //HeaderRange.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.LightGray);
+                    HeaderRange.Font.Bold = true;
 
-                // check fielpath
+                    // DataCells
+                    int RowsCount = aDT.Rows.Count;
+                    object[,] Cells = new object[RowsCount, ColumnsCount];
+
+                    for (int j = 0; j < RowsCount; j++)
+                        for (int i = 0; i < ColumnsCount; i++)
+                            Cells[j, i] = aDT.Rows[j][i];
+
+                    Worksheet.get_Range((Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[2, 1]), (Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[RowsCount + 1, ColumnsCount])).Value = Cells;
+                    Worksheet.get_Range((Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[2, 1]), (Microsoft.Office.Interop.Excel.Range)(Worksheet.Cells[RowsCount + 1, ColumnsCount])).NumberFormat = "@";
+
+                }
+
+
+
+                //Ok, now to output the file...
+
+
+
+                // check filepath
                 if (ExcelFilePath != null && ExcelFilePath != "")
                 {
                     try
                     {
-                        Worksheet.SaveAs(ExcelFilePath);
+                        wb.SaveAs(ExcelFilePath);
+                        //Worksheet.SaveAs(ExcelFilePath);
                         Excel.Quit();
                         System.Windows.MessageBox.Show("Excel file saved!");
                     }
