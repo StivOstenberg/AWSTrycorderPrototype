@@ -44,13 +44,13 @@ namespace AWSMonitor
         {
             "AccountID",
             "Username",
-            "ARN",
             "PwdEnabled ",
             "PwdLastUsed",
             "MFA Active",
             "AccessKey1-LastUsedService",
             "Policy-List",
-            "Access-Keys"
+            "Access-Keys",
+            "Groups"
             
         };
 
@@ -242,6 +242,7 @@ namespace AWSMonitor
 
             table.Columns.Add("User-Policies", typeof(string));
             table.Columns.Add("Access-Keys", typeof(string));
+            table.Columns.Add("Groups", typeof(string));
 
             
             return table;
@@ -367,9 +368,6 @@ namespace AWSMonitor
                 var atable = ProfileResults.Dequeue();
                 MyDataTable.Merge(atable);
             }
-
-            
-
             RawEC2Results = MyDataTable;
             DaGrid.ItemsSource = MyDataTable.AsDataView();
             UserGrid.ItemsSource = RawUsers.AsDataView();
@@ -393,12 +391,11 @@ namespace AWSMonitor
         private void DoFilterButton_Click(object sender, RoutedEventArgs e)
         {
             DoEC2Filter();
-            DoUserFilter();
+
         }
         private void DoEC2Filter()
         {
             if (RawEC2Results.Rows.Count < 1) return;
-            var newtable = RawEC2Results.Copy();
             var newbie = RawEC2Results.AsEnumerable();
 
             string fxp = ""; // The string what will build our query.
@@ -505,6 +502,9 @@ namespace AWSMonitor
 
         private void DoUserFilter()
         {
+            if (RawUsers.Rows.Count < 1) return;
+            var usource = RawUsers.Copy();
+
             ShowHideUserColumns();
         }
 
@@ -536,6 +536,8 @@ namespace AWSMonitor
         private void UserGrid_Loaded(object sender, RoutedEventArgs e)
         {
             UserGrid.ItemsSource = GetUsersStatusTable().AsDataView();
+            ShowHideUserColumns();
+            
         }
 
         private System.Windows.Controls.ContextMenu ECContext = new System.Windows.Controls.ContextMenu();
@@ -1103,6 +1105,8 @@ namespace AWSMonitor
         public DataTable ScanProfile(ScanRequest Request)
         {
             DataTable LUserTable = GetUsersStatusTable();
+            DataTable EC2InstancesTable = GetEC2StatusTable();
+
             Amazon.Runtime.AWSCredentials credential;
             var aprofile = Request.Profile;
             var regions2process = Request.Regions;
@@ -1119,6 +1123,7 @@ namespace AWSMonitor
                 try
                 {
                     accountid = myUserList[0].Arn.Split(':')[4];//Get the ARN and extract the AccountID ID
+                    accountid = "ID: " + accountid;// Prefix space because Excel exsucks.
                 }
                 catch(Exception ex)
                 {
@@ -1206,6 +1211,7 @@ namespace AWSMonitor
                    string username = auser.UserName;
                    string policylist = "";
                    string aklist = "";
+                   string groups = "";
 
                    ListAccessKeysRequest LAKREQ = new ListAccessKeysRequest();
                    LAKREQ.UserName = username;
@@ -1223,21 +1229,20 @@ namespace AWSMonitor
                     ListAttachedUserPoliciesResult LAUPRES = iam.ListAttachedUserPolicies(LAUPREQ);
                     foreach(var apol in LAUPRES.AttachedPolicies)
                     {
-                        if (policylist.Length > 1) aklist += "\n";
+                        if (policylist.Length > 1) policylist += "\n";
                         policylist += apol.PolicyName;
                     }
 
 
-
-
-
-
-
-
-
-
                     //Need to get policy and group info outta user
-
+                    var groopsreq = new ListGroupsForUserRequest();
+                    groopsreq.UserName = username;
+                    ListGroupsForUserResult LG = iam.ListGroupsForUser(groopsreq);
+                    foreach(var agroup in LG.Groups)
+                    {
+                        if (groups.Length > 1) groups += "\n";
+                        groups += agroup.GroupName;
+                    }
 
                     foreach(DataRow myrow in LUserTable.Rows)
                     {
@@ -1246,6 +1251,7 @@ namespace AWSMonitor
                             myrow["UserID"] = auserid;
                             myrow["User-Policies"] = policylist;
                             myrow["Access-Keys"] = aklist;
+                            myrow["Groups"] = groups;
                         }
                     }
                     foreach (DataRow myrow in RawUsers.Rows)
@@ -1255,6 +1261,7 @@ namespace AWSMonitor
                             myrow["UserID"] = auserid;
                             myrow["User-Policies"] = policylist;
                             myrow["Access-Keys"] = aklist;
+                            myrow["Groups"] = groups;
                         }
                     }                   
                 }
@@ -1489,8 +1496,7 @@ namespace AWSMonitor
                 {
                     anitem.Visibility = System.Windows.Visibility.Hidden;
                 }
-            }
-            
+            }     
         }
 
         private void ShowHideUserColumns()
@@ -1507,18 +1513,38 @@ namespace AWSMonitor
                 else anitem.Visibility = System.Windows.Visibility.Hidden;
             }
 
+
         }
 
         private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            DoEC2Filter();
-            DoUserFilter();
+            if (EC2Tab.IsSelected)
+            {
+                DoEC2Filter();
+            }
+            if (UserTab.IsSelected)
+            {
+                DoUserFilter();
+            }
+
+
+            UserGrid.InvalidateVisual();
+            DaGrid.InvalidateVisual();
+            UserTab.InvalidateVisual();
+            EC2Tab.InvalidateVisual();
+            MainUIGrid.InvalidateVisual();
+            AWSTrycorder.UpdateLayout();
+            AWSTrycorder.InvalidateVisual();
+            AWSTrycorder.Hide();
+            AWSTrycorder.Show();
+
         }
 
         private void ClearFilters_Copy_Click(object sender, RoutedEventArgs e)
         {
+
             UserGrid.ItemsSource = RawUsers.AsDataView();
-            ShowHideUserColumns();
+            DoUserFilter();
 
         }
 
