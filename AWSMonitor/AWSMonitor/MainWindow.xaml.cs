@@ -3,6 +3,8 @@ using Amazon.EC2;
 using Amazon.EC2.Model;
 using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
+using Amazon.S3;
+using Amazon.S3.Model;
 
 using System;
 using System.Collections.Generic;
@@ -36,8 +38,9 @@ namespace AWSMonitor
     /// </summary>
     public partial class MainWindow : Window
     {
-        public DataTable RawEC2Results = GetEC2StatusTable();
-        public DataTable RawUsers = GetUsersStatusTable();
+        public DataTable RawEC2Results = GetEC2DetailsTable();
+        public DataTable RawUsers = GetUsersDetailsTable();
+        public DataTable RawS3 = GetS3DetailsTable();
 
         //Just defining a default filter to avoid data overload.
         public List<string> defaultusercolumns = new List<string>()
@@ -102,7 +105,7 @@ namespace AWSMonitor
         }
         public MainWindow()
         {
-            DataTable MyDataTable = GetEC2StatusTable();
+            DataTable MyDataTable = GetEC2DetailsTable();
             
             InitializeComponent();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
@@ -163,7 +166,7 @@ namespace AWSMonitor
                 Proot.Items.Add(mi);
             }
             ColumnCombo.Items.Add("_ANY_");
-            foreach(var acolumn in GetEC2StatusTable().Columns) //Set the Column Show Hide menu up
+            foreach(var acolumn in GetEC2DetailsTable().Columns) //Set the Column Show Hide menu up
             {
                 ColumnCombo.Items.Add(acolumn.ToString());
                 System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
@@ -179,14 +182,17 @@ namespace AWSMonitor
             ColumnCombo.SelectedItem = "_ANY_";
         }
 
-        static DataTable GetS3Table()
+        static DataTable GetS3DetailsTable()
         {
             DataTable table = new DataTable();
             table.Columns.Add("AccountID", typeof(string));
             table.Columns.Add("Profile", typeof(string));
             table.Columns.Add("Bucket", typeof(string));
+            table.Columns.Add("CreationDate", typeof(string));
+            table.Columns.Add("Owner", typeof(string));
+            table.Columns.Add("Grants", typeof(string));
 
-            table.Columns.Add("Permissions", typeof(string));
+
             table.Columns.Add("WebsiteHosting", typeof(string));
             table.Columns.Add("Logging", typeof(string));
             table.Columns.Add("Events", typeof(string));
@@ -199,7 +205,7 @@ namespace AWSMonitor
             return table;
         }
 
-        static DataTable GetEC2StatusTable()
+        static DataTable GetEC2DetailsTable()
         {
             // Here we create a DataTable .
             DataTable table = new DataTable();
@@ -224,7 +230,7 @@ namespace AWSMonitor
             return table;
         }
 
-        static DataTable GetUsersStatusTable()
+        static DataTable GetUsersDetailsTable()
         {
             // Here we create a DataTable .
             DataTable table = new DataTable();
@@ -266,6 +272,430 @@ namespace AWSMonitor
             return table;
         }
 
+
+
+
+
+        public Dictionary<string, DataTable> ScanProfile(ScanRequest Request)
+        {
+            Dictionary<string, DataTable> ScanResults = new Dictionary<string, DataTable>();
+            DataTable UserDetailsTable = GetUsersDetailsTable();
+            DataTable EC2DetailsTable = GetEC2DetailsTable();
+            DataTable S3DetailsTable = GetS3DetailsTable();
+            string accountid = "";
+            Amazon.Runtime.AWSCredentials credential;
+            var aprofile = Request.Profile;
+            var regions2process = Request.Regions;
+            var SubmitResults = Request.ResultQueue;
+            try
+            {
+                credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
+                //Try to get the AccountID ID//
+
+
+                #region UserDetails
+                var iam = new AmazonIdentityManagementServiceClient(credential);
+
+                var myUserList = iam.ListUsers().Users;
+
+                try
+                {
+                    accountid = myUserList[0].Arn.Split(':')[4];//Get the ARN and extract the AccountID ID
+                    accountid = "ID: " + accountid;// Prefix added because Excel exsucks.
+                }
+                catch
+                {
+                    accountid = "?";
+                }
+
+                try // Send command to AWS to generate a Credential Report
+                { var createcredreport = iam.GenerateCredentialReport(); }
+                catch (Exception)
+                { throw; }
+
+                bool needreport = true;
+
+                Amazon.IdentityManagement.Model.GetCredentialReportResponse credreport = new GetCredentialReportResponse();
+                DateTime getreportstart = DateTime.Now;
+                DateTime getreportfinish = DateTime.Now;
+                while (needreport)
+                {
+                    try
+                    {
+                        credreport = iam.GetCredentialReport();
+                        needreport = false;
+                        getreportfinish = DateTime.Now;
+                        var dif = getreportstart - getreportfinish;  //Just a check on how long it takes.
+
+
+                        //Extract data from CSV Stream into DataTable
+                        var streambert = credreport.Content;
+                        streambert.Position = 0;
+                        StreamReader sr = new StreamReader(streambert);
+                        string myStringRow = sr.ReadLine();
+                        if (myStringRow != null) myStringRow = sr.ReadLine();//Dump the header line
+                        while (myStringRow != null)
+                        {
+                            var arow = myStringRow.Split(",".ToCharArray()[0]);
+
+                            var newrow = new object[UserDetailsTable.Columns.Count];
+                            newrow[0] = accountid;
+                            newrow[1] = aprofile;
+                            newrow[2] = ""; //UserID not in report. pull it later.
+                            newrow[3] = arow[0];
+                            newrow[4] = arow[1];
+                            newrow[5] = arow[2];
+                            newrow[6] = arow[3];
+                            newrow[7] = arow[4];
+                            newrow[8] = arow[5];
+                            newrow[9] = arow[6];
+                            newrow[10] = arow[7];
+                            newrow[11] = arow[8];
+                            newrow[12] = arow[9];
+                            newrow[13] = arow[10];
+                            newrow[14] = arow[11];
+                            newrow[15] = arow[12];
+                            newrow[16] = arow[13];
+                            newrow[17] = arow[14];
+                            newrow[18] = arow[15];
+                            newrow[19] = arow[16];
+                            newrow[20] = arow[17];
+                            newrow[21] = arow[18];
+                            newrow[22] = arow[19];
+                            newrow[23] = arow[20];
+                            newrow[24] = arow[21];
+                            RawUsers.Rows.Add(newrow);
+                            UserDetailsTable.Rows.Add(newrow);
+                            myStringRow = sr.ReadLine();
+                        }
+                        sr.Close();
+                        sr.Dispose();
+
+
+                    }
+                    catch (Exception ex)
+                    {
+                        string test = "";
+                        //Deal with this later if necessary.
+                    }
+                }
+
+
+
+                foreach (var auser in myUserList)//Fill in the userID.  Why?  because it exists.
+                {
+                    string auserid = auser.UserId;
+                    string arn = auser.Arn;
+                    string username = auser.UserName;
+                    string policylist = "";
+                    string aklist = "";
+                    string groups = "";
+
+                    ListAccessKeysRequest LAKREQ = new ListAccessKeysRequest();
+                    LAKREQ.UserName = username;
+                    ListAccessKeysResult LAKRES = iam.ListAccessKeys(LAKREQ);
+                    foreach (var blivet in LAKRES.AccessKeyMetadata)
+                    {
+                        if (aklist.Length > 1) aklist += "\n";
+                        aklist += blivet.AccessKeyId + "  :  " + blivet.Status;
+                    }
+
+
+
+                    ListAttachedUserPoliciesRequest LAUPREQ = new ListAttachedUserPoliciesRequest();
+                    LAUPREQ.UserName = username;
+                    ListAttachedUserPoliciesResult LAUPRES = iam.ListAttachedUserPolicies(LAUPREQ);
+                    foreach (var apol in LAUPRES.AttachedPolicies)
+                    {
+                        if (policylist.Length > 1) policylist += "\n";
+                        policylist += apol.PolicyName;
+                    }
+
+
+                    //Need to get policy and group info outta user
+                    var groopsreq = new ListGroupsForUserRequest();
+                    groopsreq.UserName = username;
+                    ListGroupsForUserResult LG = iam.ListGroupsForUser(groopsreq);
+                    foreach (var agroup in LG.Groups)
+                    {
+                        if (groups.Length > 1) groups += "\n";
+                        groups += agroup.GroupName;
+                    }
+
+                    foreach (DataRow myrow in UserDetailsTable.Rows)
+                    {
+                        if (myrow["ARN"].Equals(arn))
+                        {
+                            myrow["UserID"] = auserid;
+                            myrow["User-Policies"] = policylist;
+                            myrow["Access-Keys"] = aklist;
+                            myrow["Groups"] = groups;
+                        }
+                    }
+
+                }
+                #endregion
+
+                #region S3Details
+                AmazonS3Client S3Client = new AmazonS3Client(credential);
+                ListBucketsResponse response = S3Client.ListBuckets();
+                foreach (S3Bucket abucket in response.Buckets)
+                {
+                    DataRow abucketrow = GetS3DetailsTable().NewRow();
+                    var name = abucket.BucketName;
+                    var createddate = abucket.CreationDate;
+                    string owner = "";
+                    string grants = "";
+                    GetACLRequest GACR = new GetACLRequest();
+                    GACR.BucketName = name;
+                    var ACL = S3Client.GetACL(GACR);
+                    var grantlist = ACL.AccessControlList;
+                    owner = grantlist.Owner.DisplayName + " - " + grantlist.Owner.Id;
+                    foreach (var agrant in grantlist.Grants)
+                    {
+                        if (grants.Length > 1) grants += "\n";
+                        grants += agrant.Grantee + " - " + agrant.Permission;
+                    }
+
+
+
+                    abucketrow["AccountID"] = accountid;
+                    abucketrow["Profile"] = aprofile;
+                    abucketrow["Bucket"] = name;
+                    abucketrow["CreationDate"] = createddate;
+                    abucketrow["Owner"] = owner;
+                    abucketrow["Grants"] = grants;
+
+
+                    abucketrow["WebsiteHosting"] = "X";
+                    abucketrow["Logging"] = "X";
+                    abucketrow["Events"] = "X";
+                    abucketrow["Versioning"] = "X";
+                    abucketrow["LifeCycle"] = "X";
+                    abucketrow["Replication"] = "X";
+                    abucketrow["Tags"] = "X";
+                    abucketrow["RequesterPays"] = "X";
+
+
+                    S3DetailsTable.Rows.Add(abucketrow);
+                }
+
+
+
+
+                #endregion
+
+
+                #region GetEC2Region
+
+                //////////////////////////////////////////////////////////
+
+                //Foreach aregion
+                foreach (var aregion in regions2process)
+                {
+                    //Skip GovCloud and Beijing. They require special handling and I dont need em.
+                    if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
+                    if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
+                    var region = aregion;
+
+                    regioncounter++;
+
+
+
+                    //Try to get scheduled events on my Profile/aregion
+                    var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
+                    var request = new DescribeInstanceStatusRequest();
+                    request.IncludeAllInstances = true;
+                    Dispatcher.Invoke(doupdatePbDelegate,
+                       System.Windows.Threading.DispatcherPriority.Background,
+                        new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
+                    var instatresponse = ec2.DescribeInstanceStatus(request);
+
+
+                    var indatarequest = new DescribeInstancesRequest();
+
+
+
+
+                    foreach (var instat in instatresponse.InstanceStatuses)
+                    {
+
+                        indatarequest.InstanceIds.Add(instat.InstanceId);
+                    }
+                    DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
+
+
+                    int count = instatresponse.InstanceStatuses.Count();
+
+                    foreach (var instat in instatresponse.InstanceStatuses)
+                    {
+                        //Collect the datases
+                        string instanceid = instat.InstanceId;
+                        string instancename = "";
+                        ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region + "   Instance: " + instanceid;
+                        Dispatcher.Invoke(doupdatePbDelegate,
+                            System.Windows.Threading.DispatcherPriority.Background,
+                            new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
+
+
+
+                        var status = instat.Status.Status;
+                        string AZ = instat.AvailabilityZone;
+                        var istate = instat.InstanceState.Name;
+
+                        string profile = aprofile;
+                        string myregion = region.ToString();
+                        int eventnumber = instat.Events.Count();
+
+                        string eventlist = "";
+                        var urtburgle = DescResult.Reservations;
+
+                        string tags = ""; // Holds the list of tags to print out.
+
+                        var loadtags = (from t in DescResult.Reservations
+                                        where t.Instances[0].InstanceId.Equals(instanceid)
+                                        select t.Instances[0].Tags).AsEnumerable();
+
+                        Dictionary<string, string> taglist = new Dictionary<string, string>();
+                        foreach (var rekey in loadtags)
+                        {
+                            foreach (var kvp in rekey)
+                            {
+                                taglist.Add(kvp.Key, kvp.Value);
+                            }
+                        }
+
+                        foreach (var atag in taglist)
+                        {
+                            if (atag.Key.Equals("Name"))
+                            {
+                                instancename = atag.Value;
+                            }
+                            if (!TagFilterCombo.Items.Contains(atag.Key))
+                            {
+                                TagFilterCombo.Items.Add(atag.Key);
+                            }
+                            if (tags.Length > 1)
+                            {
+                                tags += "\n" + atag.Key + ":" + atag.Value;
+                            }
+                            else
+                            {
+                                tags += atag.Key + ":" + atag.Value;
+                            }
+                        }
+
+                        if (eventnumber > 0)
+                        {
+                            foreach (var anevent in instat.Events)
+                            {
+                                eventlist += anevent.Description + "\n";
+                            }
+                        }
+
+                        var platform = (from t in urtburgle
+                                        where t.Instances[0].InstanceId.Equals(instanceid)
+                                        select t.Instances[0].Platform).FirstOrDefault();
+                        if (String.IsNullOrEmpty(platform)) platform = "Linux";
+
+                        //Need more info for SSH and SCP...
+
+                        var Priv_IP = (from t in urtburgle
+                                       where t.Instances[0].InstanceId.Equals(instanceid)
+                                       select t.Instances[0].PrivateIpAddress).FirstOrDefault();
+                        if (String.IsNullOrEmpty(Priv_IP)) Priv_IP = "?";
+
+                        var publicIP = (from t in urtburgle
+                                        where t.Instances[0].InstanceId.Equals(instanceid)
+                                        select t.Instances[0].PublicIpAddress).FirstOrDefault();
+                        if (String.IsNullOrEmpty(publicIP)) publicIP = "";
+
+                        var publicDNS = (from t in urtburgle
+                                         where t.Instances[0].InstanceId.Equals(instanceid)
+                                         select t.Instances[0].PublicDnsName).FirstOrDefault();
+                        if (String.IsNullOrEmpty(publicDNS)) publicDNS = "";
+
+                        //Virtualization type (HVM, Paravirtual)
+                        var ivirtType = (from t in urtburgle
+                                         where t.Instances[0].InstanceId.Equals(instanceid)
+                                         select t.Instances[0].VirtualizationType).FirstOrDefault();
+                        if (String.IsNullOrEmpty(ivirtType)) ivirtType = "?";
+
+                        // InstanceType (m3/Large etc)
+                        var instancetype = (from t in urtburgle
+                                            where t.Instances[0].InstanceId.Equals(instanceid)
+                                            select t.Instances[0].InstanceType).FirstOrDefault();
+                        if (String.IsNullOrEmpty(instancetype)) instancetype = "?";
+
+                        var SGs = (from t in urtburgle
+                                   where t.Instances[0].InstanceId.Equals(instanceid)
+                                   select t.Instances[0].SecurityGroups);
+
+                        string sglist = "";
+
+
+                        if (SGs.Count() > 0)
+                        {
+                            foreach (var ansg in SGs.FirstOrDefault())
+                            {
+                                if (sglist.Length > 2) { sglist += "\n"; }
+                                sglist += ansg.GroupName;
+                            }
+                        }
+                        else
+                        {
+                            sglist = "_NONE!_";
+                        }
+                        //Add to table
+                        if (String.IsNullOrEmpty(sglist)) sglist = "NullOrEmpty";
+
+                        if (String.IsNullOrEmpty(instancename)) instancename = "";
+                        string rabbit = accountid + profile + myregion + instancename + instanceid + AZ + status + eventnumber + eventlist + tags + Priv_IP + publicIP + publicDNS + istate + ivirtType + instancetype + sglist;
+
+                        EC2DetailsTable.Rows.Add(accountid, profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags, Priv_IP, publicIP, publicDNS, istate, ivirtType, instancetype, sglist);
+
+
+                    }
+
+                }
+                #endregion
+                ScanResults.Add("EC2", EC2DetailsTable);
+                ScanResults.Add("Users", UserDetailsTable);
+                ScanResults.Add("S3", S3DetailsTable);
+
+                return ScanResults;
+            }
+            catch (Exception ex)
+            {
+                //If we failed to connect with creds.
+
+                string error = new string(ex.ToString().TakeWhile(c => c != '\n').ToArray());
+                System.Windows.MessageBox.Show(error, Request.Profile.ToString() + " credentials failed to work.\n");
+                //Try to flag the menu item so it no longer selectable, and maybe make she red.
+                System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[1];
+                foreach (System.Windows.Controls.MenuItem amenuitem in Proot.Items)
+                {
+                    if (amenuitem.Header.ToString() == aprofile.ToString())
+                    {
+                        amenuitem.IsCheckable = false;
+                        amenuitem.IsChecked = false;
+                        amenuitem.Background = Brushes.Red;
+                        amenuitem.ToolTip = Request.Profile.ToString() + " credentials failed to work.\n";
+                    }
+                }
+
+
+                ScanResults.Add("EC2", GetEC2DetailsTable());
+                ScanResults.Add("Users", GetUsersDetailsTable());
+                ScanResults.Add("S3", GetS3DetailsTable());
+
+                return ScanResults;
+
+
+
+            }
+
+        }
 
 
         public class EC2Instance
@@ -310,9 +740,9 @@ namespace AWSMonitor
 
         private void Process()
         {
-            RawUsers = GetUsersStatusTable();
+            RawUsers = GetUsersDetailsTable();
             ProgressBar1.Visibility = System.Windows.Visibility.Visible;
-            DataTable MyDataTable = GetEC2StatusTable();
+            DataTable MyDataTable = GetEC2DetailsTable();
             TagFilterCombo.Items.Clear();
 
             //Create a new instance of our ProgressBar Delegate that points
@@ -364,7 +794,7 @@ namespace AWSMonitor
 
             //Trying to parallelize this.
             // Establish QUEUE for threads to report back on
-            Queue<DataTable> ProfileResults = new Queue<DataTable>();
+            Queue<Dictionary<string, DataTable>> ProfileResults = new Queue<Dictionary<string, DataTable>>();
 
             ProgressBar1.Visibility = System.Windows.Visibility.Visible;
              foreach (var aprofile in prof2process)
@@ -380,15 +810,26 @@ namespace AWSMonitor
                  
             }
 
-             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
+            ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
+
+            var tempec2 = GetEC2DetailsTable();
+            var tempuser = GetEC2DetailsTable();
+            var tempS3 = GetS3DetailsTable();
+            
             while(ProfileResults.Count>0)
             {
-                var atable = ProfileResults.Dequeue();
-                MyDataTable.Merge(atable);
+                var scanresults = ProfileResults.Dequeue();
+                tempec2.Merge(scanresults["EC2"]);
+                tempuser.Merge(scanresults["Users"]);
+                tempS3.Merge(scanresults["S3"]);
             }
-            RawEC2Results = MyDataTable;
-            DaGrid.ItemsSource = MyDataTable.AsDataView();
+            RawEC2Results = tempec2.Copy();
+            RawUsers = tempuser.Copy();
+            RawS3 = tempS3.Copy();
+
+            DaGrid.ItemsSource = RawEC2Results.AsDataView();
             UserGrid.ItemsSource = RawUsers.AsDataView();
+            S3DataGrid.ItemsSource = RawS3.AsDataView();
             ProgressBar1.Visibility = System.Windows.Visibility.Hidden;
             ProcessingLabel.Content  = "Results Displayed: " + RawEC2Results.Rows.Count;
 
@@ -460,7 +901,7 @@ namespace AWSMonitor
                                                                           p.Field<string>("iType").Contains(FilterTagText.Text) ||
                                                                           p.Field<string>("SecurityGroups").Contains(FilterTagText.Text));
                     }
-                    catch(Exception ex)
+                    catch
                     {
                         newbie = RawEC2Results.AsEnumerable();
                     }
@@ -474,7 +915,7 @@ namespace AWSMonitor
                 
 
 
-                var newdt = GetEC2StatusTable();
+                var newdt = GetEC2DetailsTable();
                 int count = newbie.Count();
                 foreach (var element in newbie)
                 {
@@ -500,10 +941,7 @@ namespace AWSMonitor
                     //-------------------------------------------------------------------------------------------
                     string daProfile = (string)row.Table.Columns[0].ToString();
 
-                    if(!isregionchecked)
-                    {
-                        string rabbit = "filtered out!";
-                    }
+
 
                     if(isprofilechecked & isregionchecked)
                     { 
@@ -553,7 +991,7 @@ namespace AWSMonitor
 
         private void UserGrid_Loaded(object sender, RoutedEventArgs e)
         {
-            UserGrid.ItemsSource = GetUsersStatusTable().AsDataView();
+            UserGrid.ItemsSource = GetUsersDetailsTable().AsDataView();
             ShowHideUserColumns();
             
         }
@@ -580,7 +1018,7 @@ namespace AWSMonitor
                 // Setup session options
                 SessionOptions sessionOptions = new SessionOptions
                 {
-                    Protocol = Protocol.Sftp,
+                    Protocol = WinSCP.Protocol.Sftp,
                     HostName = hostname,
                     UserName = username,
  //                   Password = password,
@@ -614,7 +1052,7 @@ namespace AWSMonitor
 
                 return toreturn;
             }
-            catch (Exception e)
+            catch 
             {
                 toreturn += "/nFailed copy to: " + hostname + ". Is key loaded in Pageant?";
                 return toreturn;
@@ -776,7 +1214,7 @@ namespace AWSMonitor
                     }
                     catch
                     {
-                        int error = 0;
+                        //Nothing to do
                     }
                 }
 
@@ -1120,382 +1558,6 @@ namespace AWSMonitor
 
 
 
-        public DataTable ScanProfile(ScanRequest Request)
-        {
-            Dictionary<string, DataTable> ScanResults = new Dictionary<string, DataTable>();
-            DataTable LUserTable = GetUsersStatusTable();
-            DataTable EC2InstancesTable = GetEC2StatusTable();
-            DataTable S3DetailsTable = GetS3Table();
-
-            Amazon.Runtime.AWSCredentials credential;
-            var aprofile = Request.Profile;
-            var regions2process = Request.Regions;
-            var SubmitResults = Request.ResultQueue;
-            try
-            {
-                credential = new Amazon.Runtime.StoredProfileAWSCredentials(aprofile);
-                //Try to get the AccountID ID//
-
-                var iam = new AmazonIdentityManagementServiceClient(credential);
-
-                var myUserList = iam.ListUsers().Users;
-                string accountid = "";
-                try
-                {
-                    accountid = myUserList[0].Arn.Split(':')[4];//Get the ARN and extract the AccountID ID
-                    accountid = "ID: " + accountid;// Prefix added because Excel exsucks.
-                }
-                catch(Exception ex)
-                {
-                    accountid = "?";
-                }
-
-                try // Send command to AWS to generate a Credential Report
-                { var createcredreport = iam.GenerateCredentialReport();  }
-                catch (Exception)
-                { throw; }
-
-                bool needreport=true;
-
-                Amazon.IdentityManagement.Model.GetCredentialReportResponse credreport = new GetCredentialReportResponse();
-                DateTime getreportstart = DateTime.Now;
-                DateTime getreportfinish = DateTime.Now;
-                while (needreport)
-                {
-                    try
-                    {
-                        credreport = iam.GetCredentialReport();
-                        needreport = false;
-                        getreportfinish = DateTime.Now;
-                        var dif = getreportstart - getreportfinish;  //Just a check on how long it takes.
-
-
-                        //Extract data from CSV Stream into DataTable
-                        var streambert = credreport.Content;
-                        streambert.Position = 0;
-                        StreamReader sr = new StreamReader(streambert);
-                        string myStringRow = sr.ReadLine();
-                         if(myStringRow!=null) myStringRow = sr.ReadLine();//Dump the header line
-                        while (myStringRow != null) 
-                        {
-                            var arow = myStringRow.Split(",".ToCharArray()[0]);
-
-                            var newrow = new object[RawUsers.Columns.Count];
-                            newrow[0] = accountid;
-                            newrow[1] = aprofile;
-                            newrow[2] = ""; //UserID not in report. pull it later.
-                            newrow[3] = arow[0];
-                            newrow[4] = arow[1];
-                            newrow[5] = arow[2];
-                            newrow[6] = arow[3];
-                            newrow[7] = arow[4];
-                            newrow[8] = arow[5];
-                            newrow[9] = arow[6];
-                            newrow[10] = arow[7];
-                            newrow[11] = arow[8];
-                            newrow[12] = arow[9];
-                            newrow[13] = arow[10];
-                            newrow[14] = arow[11];
-                            newrow[15] = arow[12];
-                            newrow[16] = arow[13];
-                            newrow[17] = arow[14];
-                            newrow[18] = arow[15];
-                            newrow[19] = arow[16];
-                            newrow[20] = arow[17];
-                            newrow[21] = arow[18];
-                            newrow[22] = arow[19];
-                            newrow[23] = arow[20];
-                            newrow[24] = arow[21];
-                            RawUsers.Rows.Add(newrow);
-                            LUserTable.Rows.Add(newrow);
-                            myStringRow = sr.ReadLine();
-                        }
-                        sr.Close();
-                        sr.Dispose();
-
-
-                    }
-                    catch (Exception ex)
-                    {
-                        string test = "";
-                       //Deal with this later if necessary.
-                    }
-                }
-
-      
-
-                foreach (var auser in myUserList)//Fill in the userID.  Why?  because it exists.
-                {
-                   string auserid = auser.UserId;
-                   string arn = auser.Arn;
-                   string username = auser.UserName;
-                   string policylist = "";
-                   string aklist = "";
-                   string groups = "";
-
-                   ListAccessKeysRequest LAKREQ = new ListAccessKeysRequest();
-                   LAKREQ.UserName = username;
-                   ListAccessKeysResult LAKRES = iam.ListAccessKeys(LAKREQ);
-                   foreach(var blivet in LAKRES.AccessKeyMetadata)
-                   {
-                       if (aklist.Length > 1) aklist += "\n";
-                       aklist += blivet.AccessKeyId + "  :  " + blivet.Status;
-                   }
-
-
-
-                    ListAttachedUserPoliciesRequest LAUPREQ = new ListAttachedUserPoliciesRequest();
-                    LAUPREQ.UserName = username;
-                    ListAttachedUserPoliciesResult LAUPRES = iam.ListAttachedUserPolicies(LAUPREQ);
-                    foreach(var apol in LAUPRES.AttachedPolicies)
-                    {
-                        if (policylist.Length > 1) policylist += "\n";
-                        policylist += apol.PolicyName;
-                    }
-
-
-                    //Need to get policy and group info outta user
-                    var groopsreq = new ListGroupsForUserRequest();
-                    groopsreq.UserName = username;
-                    ListGroupsForUserResult LG = iam.ListGroupsForUser(groopsreq);
-                    foreach(var agroup in LG.Groups)
-                    {
-                        if (groups.Length > 1) groups += "\n";
-                        groups += agroup.GroupName;
-                    }
-
-                    foreach(DataRow myrow in LUserTable.Rows)
-                    {
-                        if (myrow["ARN"].Equals(arn))
-                        {
-                            myrow["UserID"] = auserid;
-                            myrow["User-Policies"] = policylist;
-                            myrow["Access-Keys"] = aklist;
-                            myrow["Groups"] = groups;
-                        }
-                    }
-                    foreach (DataRow myrow in RawUsers.Rows)
-                    {
-                        if (myrow["ARN"].Equals(arn))
-                        {
-                            myrow["UserID"] = auserid;
-                            myrow["User-Policies"] = policylist;
-                            myrow["Access-Keys"] = aklist;
-                            myrow["Groups"] = groups;
-                        }
-                    }
-                }
-
-
-
-
-
-                #region GetusersRegion
-
-                //////////////////////////////////////////////////////////
-                var MyDataTable = GetEC2StatusTable();
-                //Foreach aregion
-                foreach (var aregion in regions2process)
-                {
-                    //Skip GovCloud and Beijing. They require special handling and I dont need em.
-                    if (aregion == Amazon.RegionEndpoint.USGovCloudWest1) continue;
-                    if (aregion == Amazon.RegionEndpoint.CNNorth1) continue;
-                    var region = aregion;
-
-                    regioncounter++;
-
-
-
-                    //Try to get scheduled events on my Profile/aregion
-                    var ec2 = AWSClientFactory.CreateAmazonEC2Client(credential, region);
-                    var request = new DescribeInstanceStatusRequest();
-                    request.IncludeAllInstances = true;
-                    Dispatcher.Invoke(doupdatePbDelegate,
-                       System.Windows.Threading.DispatcherPriority.Background,
-                        new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
-                    var instatresponse = ec2.DescribeInstanceStatus(request);
-
-
-                    var indatarequest = new DescribeInstancesRequest();
-
-
-
-
-                    foreach (var instat in instatresponse.InstanceStatuses)
-                    {
-
-                           indatarequest.InstanceIds.Add(instat.InstanceId);
-                    }
-                    DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
-
-
-                    int count = instatresponse.InstanceStatuses.Count();
-
-                    foreach (var instat in instatresponse.InstanceStatuses)
-                    {
-                        //Collect the datases
-                        string instanceid = instat.InstanceId;
-                        string instancename = "";
-                        ProcessingLabel.Content = "Scanning -> Profile:" + aprofile + "    Region: " + region + "   Instance: " + instanceid;
-                        Dispatcher.Invoke(doupdatePbDelegate,
-                            System.Windows.Threading.DispatcherPriority.Background,
-                            new object[] { System.Windows.Controls.ProgressBar.ValueProperty, regioncounter });
-
-
-
-                        var status = instat.Status.Status;
-                        string AZ = instat.AvailabilityZone;
-                        var istate = instat.InstanceState.Name;
-                        
-                        string profile = aprofile;
-                        string myregion = region.ToString();
-                        int eventnumber = instat.Events.Count();
-
-                        string eventlist = "";
-                        var urtburgle = DescResult.Reservations;
-
-                        string tags = ""; // Holds the list of tags to print out.
-
-                        var loadtags = (from t in DescResult.Reservations
-                                        where t.Instances[0].InstanceId.Equals(instanceid)
-                                        select t.Instances[0].Tags).AsEnumerable();
-
-                        Dictionary<string, string> taglist = new Dictionary<string, string>();
-                        foreach (var rekey in loadtags)
-                        {
-                            foreach (var kvp in rekey)
-                            {
-                                taglist.Add(kvp.Key, kvp.Value);
-                            }
-                        }
-
-                        foreach (var atag in taglist)
-                        {
-                            if (atag.Key.Equals("Name"))
-                            {
-                                instancename = atag.Value;
-                            }
-                            if (!TagFilterCombo.Items.Contains(atag.Key))
-                            {
-                                TagFilterCombo.Items.Add(atag.Key);
-                            }
-                            if (tags.Length > 1)
-                            {
-                                tags += "\n" + atag.Key + ":" + atag.Value;
-                            }
-                            else
-                            {
-                                tags += atag.Key + ":" + atag.Value;
-                            }
-                        }
-
-                        if (eventnumber > 0)
-                        {
-                            foreach (var anevent in instat.Events)
-                            {
-                                eventlist += anevent.Description + "\n";
-                            }
-                        }
-
-                        var platform = (from t in urtburgle
-                                        where t.Instances[0].InstanceId.Equals(instanceid)
-                                        select t.Instances[0].Platform).FirstOrDefault();
-                        if (String.IsNullOrEmpty(platform)) platform = "Linux";
-
-                        //Need more info for SSH and SCP...
-
-                        var Priv_IP = (from t in urtburgle
-                                        where t.Instances[0].InstanceId.Equals(instanceid)
-                                        select t.Instances[0].PrivateIpAddress).FirstOrDefault();
-                        if (String.IsNullOrEmpty(Priv_IP)) Priv_IP = "?";
-                        
-                        var publicIP = (from t in urtburgle
-                                        where t.Instances[0].InstanceId.Equals(instanceid)
-                                        select t.Instances[0].PublicIpAddress).FirstOrDefault();
-                        if (String.IsNullOrEmpty(publicIP)) publicIP = "";
-
-                        var publicDNS = (from t in urtburgle
-                                         where t.Instances[0].InstanceId.Equals(instanceid)
-                                         select t.Instances[0].PublicDnsName).FirstOrDefault();
-                        if (String.IsNullOrEmpty(publicDNS)) publicDNS = "";
-
-                        //Virtualization type (HVM, Paravirtual)
-                        var ivirtType = (from t in urtburgle
-                                         where t.Instances[0].InstanceId.Equals(instanceid)
-                                         select t.Instances[0].VirtualizationType).FirstOrDefault();
-                        if (String.IsNullOrEmpty(ivirtType)) ivirtType = "?";
-
-                        // InstanceType (m3/Large etc)
-                        var instancetype = (from t in urtburgle
-                                       where t.Instances[0].InstanceId.Equals(instanceid)
-                                       select t.Instances[0].InstanceType).FirstOrDefault();
-                        if (String.IsNullOrEmpty(instancetype)) instancetype = "?";
-
-                        var SGs = (from t in urtburgle
-                                            where t.Instances[0].InstanceId.Equals(instanceid)
-                                            select t.Instances[0].SecurityGroups);
-
-                        string sglist = "";
-
-
-                        if (SGs.Count() > 0)
-                        {
-                            foreach (var ansg in SGs.FirstOrDefault())
-                            {
-                                if (sglist.Length > 2) { sglist += "\n"; }
-                                sglist += ansg.GroupName;
-                            }
-                        }
-                        else
-                        {
-                            sglist = "_NONE!_";
-                        }
-                        //Add to table
-                        if (String.IsNullOrEmpty(sglist)) sglist = "NullOrEmpty";
-
-                        if (String.IsNullOrEmpty(instancename)) instancename = "";
-                        string rabbit = accountid+profile+ myregion+ instancename+ instanceid+ AZ+ status+ eventnumber+ eventlist+ tags+ Priv_IP+ publicIP+ publicDNS+ istate+ ivirtType+instancetype+ sglist;
-
-                        MyDataTable.Rows.Add(accountid, profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags,Priv_IP ,publicIP, publicDNS, istate, ivirtType, instancetype,sglist);
-
-
-                    }
-
-                }
-                #endregion
-
-
-                return MyDataTable;
-            }
-            catch(Exception ex)
-            {
-                //If we failed to connect with creds.
-
-                string error = new string(ex.ToString().TakeWhile(c => c != '\n').ToArray());
-                System.Windows.MessageBox.Show(error, Request.Profile.ToString() + " credentials failed to work.\n");
-                //Try to flag the menu item so it no longer selectable, and maybe make she red.
-                System.Windows.Controls.MenuItem Proot = (System.Windows.Controls.MenuItem)this.MainMenu.Items[1];
-                foreach(System.Windows.Controls.MenuItem amenuitem in Proot.Items)
-                {
-                    if(amenuitem.Header.ToString()==aprofile.ToString())
-                    {
-                        amenuitem.IsCheckable = false;
-                        amenuitem.IsChecked = false;
-                        amenuitem.Background = Brushes.Red;
-                        amenuitem.ToolTip = Request.Profile.ToString() + " credentials failed to work.\n";
-                    }
-                }
-
-
-
-
-                var MyDataTable = GetEC2StatusTable();
-                return MyDataTable;
-
-            }
-
-        }
-
 
 
         private void ShowHideEC2Columns()
@@ -1662,6 +1724,6 @@ namespace AWSMonitor
     {
         public string Profile { get; set; }
         public List<Amazon.RegionEndpoint> Regions { get; set; }
-        public Queue<DataTable> ResultQueue { get; set; }
+        public Queue< Dictionary<string,DataTable>> ResultQueue { get; set; }
     }
 }

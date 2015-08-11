@@ -70,7 +70,9 @@
                 </Grid>
             </TabItem>
             <TabItem x:Name="S3" Header="S3" ToolTip="S3 Information" RenderTransformOrigin="0.538,2.852">
-                <Grid x:Name="S3UIGrid" Background="#FFE5E5E5" Margin="0,0,-0.2,42.4"/>
+                <Grid x:Name="S3UIGrid" Background="#FFE5E5E5" Margin="0,0,-0.2,42.4">
+                    <DataGrid x:Name="S3DataGrid" VerticalAlignment="Top" Height="285"/>
+                </Grid>
             </TabItem>
             <TabItem x:Name="MiscTab" Header="Misc" ToolTip="Danger.   This is where I stick stuff that is dicey.">
                 <Grid x:Name="MiscGrid1" Background="#FFE5E5E5">
