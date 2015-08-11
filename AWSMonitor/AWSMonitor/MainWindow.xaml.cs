@@ -437,6 +437,7 @@ namespace AWSMonitor
                 #endregion
 
                 #region S3Details
+                try { 
                 AmazonS3Client S3Client = new AmazonS3Client(credential);
                 ListBucketsResponse response = S3Client.ListBuckets();
                 foreach (S3Bucket abucket in response.Buckets)
@@ -478,6 +479,12 @@ namespace AWSMonitor
 
 
                     S3DetailsTable.Rows.Add(abucketrow);
+                }
+
+                }
+                catch
+                {
+                    System.Windows.Forms.MessageBox.Show("S3 Failed!");
                 }
 
 
