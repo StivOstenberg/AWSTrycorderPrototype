@@ -189,6 +189,7 @@ namespace AWSMonitor
             table.Columns.Add("Profile", typeof(string));
             table.Columns.Add("Bucket", typeof(string));
             table.Columns.Add("CreationDate", typeof(string));
+            table.Columns.Add("LastAccess", typeof(string));
             table.Columns.Add("Owner", typeof(string));
             table.Columns.Add("Grants", typeof(string));
 
@@ -438,25 +439,55 @@ namespace AWSMonitor
 
                 #region S3Details
                 try { 
-                AmazonS3Client S3Client = new AmazonS3Client(credential);
+
+                AmazonS3Client S3Client = new AmazonS3Client(credential,Amazon.RegionEndpoint.USEast1);
                 ListBucketsResponse response = S3Client.ListBuckets();
                 foreach (S3Bucket abucket in response.Buckets)
                 {
+
+                    
                     DataRow abucketrow = GetS3DetailsTable().NewRow();
                     var name = abucket.BucketName;
+
+                    GetBucketLocationRequest gbr = new GetBucketLocationRequest();
+                    gbr.BucketName=name;
+                    GetBucketLocationResponse location = S3Client.GetBucketLocation(gbr);
+                    var region = location.Location.Value;
+                    if (region.Equals(""))region="us-east-1";
+                    var pointy = RegionEndpoint.GetBySystemName(region);
+
+
+
+                    //Build a config that references the buckets region.
+                    AmazonS3Config S3C = new AmazonS3Config();
+                    S3C.RegionEndpoint=pointy;
+                    AmazonS3Client BS3Client = new AmazonS3Client(credential, S3C);
+                 
                     var createddate = abucket.CreationDate;
                     string owner = "";
                     string grants = "";
+                    string tags = "";
+                    string lastaccess = "";
+                    string websitehosting = "";
+                    //Now start pulling der einen data.
+
                     GetACLRequest GACR = new GetACLRequest();
                     GACR.BucketName = name;
-                    var ACL = S3Client.GetACL(GACR);
+                    var ACL = BS3Client.GetACL(GACR);
                     var grantlist = ACL.AccessControlList;
-                    owner = grantlist.Owner.DisplayName + " - " + grantlist.Owner.Id;
+                    owner = grantlist.Owner.DisplayName;
                     foreach (var agrant in grantlist.Grants)
                     {
                         if (grants.Length > 1) grants += "\n";
                         grants += agrant.Grantee + " - " + agrant.Permission;
                     }
+
+                    GetObjectMetadataRequest request = new GetObjectMetadataRequest();
+                    request.BucketName = name;
+                    GetObjectMetadataResponse MDresponse = BS3Client.GetObjectMetadata(request);
+                    lastaccess = MDresponse.LastModified.ToString();
+                    websitehosting = MDresponse.WebsiteRedirectLocation;
+
 
 
 
@@ -464,11 +495,11 @@ namespace AWSMonitor
                     abucketrow["Profile"] = aprofile;
                     abucketrow["Bucket"] = name;
                     abucketrow["CreationDate"] = createddate;
+                    abucketrow["LastAccess"] = lastaccess;
                     abucketrow["Owner"] = owner;
                     abucketrow["Grants"] = grants;
 
-
-                    abucketrow["WebsiteHosting"] = "X";
+                    abucketrow["WebsiteHosting"] = websitehosting;
                     abucketrow["Logging"] = "X";
                     abucketrow["Events"] = "X";
                     abucketrow["Versioning"] = "X";
@@ -476,15 +507,14 @@ namespace AWSMonitor
                     abucketrow["Replication"] = "X";
                     abucketrow["Tags"] = "X";
                     abucketrow["RequesterPays"] = "X";
-
-
-                    S3DetailsTable.Rows.Add(abucketrow);
+                    S3DetailsTable.Rows.Add(abucketrow.ItemArray);
                 }
 
                 }
-                catch
+                catch(Exception ex)
                 {
-                    System.Windows.Forms.MessageBox.Show("S3 Failed!");
+                   
+                    System.Windows.Forms.MessageBox.Show("S3 Failed!\n"+ex);
                 }
 
 
@@ -1429,6 +1459,7 @@ namespace AWSMonitor
             Dictionary<string, DataTable> mydata = new Dictionary<string, DataTable>();
             mydata.Add("Users", RawUsers);
             mydata.Add("EC2 Instances", RawEC2Results);
+            mydata.Add("S3", RawS3);
             ExportToExcel(mydata, outputfile);
         }
 
@@ -1607,25 +1638,7 @@ namespace AWSMonitor
 
         private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (EC2Tab.IsSelected)
-            {
-                DoEC2Filter();
-            }
-            if (UserTab.IsSelected)
-            {
-                DoUserFilter();
-            }
 
-
-            UserGrid.InvalidateVisual();
-            DaGrid.InvalidateVisual();
-            UserTab.InvalidateVisual();
-            EC2Tab.InvalidateVisual();
-            MainUIGrid.InvalidateVisual();
-            AWSTrycorder.UpdateLayout();
-            AWSTrycorder.InvalidateVisual();
-            AWSTrycorder.Hide();
-            AWSTrycorder.Show();
 
         }
 
