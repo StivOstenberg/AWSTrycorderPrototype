@@ -338,7 +338,7 @@ namespace AWSMonitor {
         
         #line 72 "..\..\MainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
-        internal System.Windows.Controls.TabItem MiscTab;
+        internal System.Windows.Controls.TabItem S3;
         
         #line default
         #line hidden
@@ -346,31 +346,23 @@ namespace AWSMonitor {
         
         #line 73 "..\..\MainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        internal System.Windows.Controls.Grid S3UIGrid;
+        
+        #line default
+        #line hidden
+        
+        
+        #line 75 "..\..\MainWindow.xaml"
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        internal System.Windows.Controls.TabItem MiscTab;
+        
+        #line default
+        #line hidden
+        
+        
+        #line 76 "..\..\MainWindow.xaml"
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         internal System.Windows.Controls.Grid MiscGrid1;
-        
-        #line default
-        #line hidden
-        
-        
-        #line 79 "..\..\MainWindow.xaml"
-        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
-        internal System.Windows.Controls.TextBox LocalFileTextbox;
-        
-        #line default
-        #line hidden
-        
-        
-        #line 80 "..\..\MainWindow.xaml"
-        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
-        internal System.Windows.Controls.TextBox EC2dirtoCopytoTextbox;
-        
-        #line default
-        #line hidden
-        
-        
-        #line 81 "..\..\MainWindow.xaml"
-        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
-        internal System.Windows.Controls.Button FilepickerButton;
         
         #line default
         #line hidden
@@ -378,13 +370,37 @@ namespace AWSMonitor {
         
         #line 82 "..\..\MainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
-        internal System.Windows.Controls.Button FileCopyButton;
+        internal System.Windows.Controls.TextBox LocalFileTextbox;
         
         #line default
         #line hidden
         
         
         #line 83 "..\..\MainWindow.xaml"
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        internal System.Windows.Controls.TextBox EC2dirtoCopytoTextbox;
+        
+        #line default
+        #line hidden
+        
+        
+        #line 84 "..\..\MainWindow.xaml"
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        internal System.Windows.Controls.Button FilepickerButton;
+        
+        #line default
+        #line hidden
+        
+        
+        #line 85 "..\..\MainWindow.xaml"
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        internal System.Windows.Controls.Button FileCopyButton;
+        
+        #line default
+        #line hidden
+        
+        
+        #line 86 "..\..\MainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         internal System.Windows.Controls.Label Warning;
         
@@ -665,36 +681,42 @@ namespace AWSMonitor {
             #line hidden
             return;
             case 38:
-            this.MiscTab = ((System.Windows.Controls.TabItem)(target));
+            this.S3 = ((System.Windows.Controls.TabItem)(target));
             return;
             case 39:
-            this.MiscGrid1 = ((System.Windows.Controls.Grid)(target));
+            this.S3UIGrid = ((System.Windows.Controls.Grid)(target));
             return;
             case 40:
-            this.LocalFileTextbox = ((System.Windows.Controls.TextBox)(target));
+            this.MiscTab = ((System.Windows.Controls.TabItem)(target));
             return;
             case 41:
-            this.EC2dirtoCopytoTextbox = ((System.Windows.Controls.TextBox)(target));
+            this.MiscGrid1 = ((System.Windows.Controls.Grid)(target));
             return;
             case 42:
+            this.LocalFileTextbox = ((System.Windows.Controls.TextBox)(target));
+            return;
+            case 43:
+            this.EC2dirtoCopytoTextbox = ((System.Windows.Controls.TextBox)(target));
+            return;
+            case 44:
             this.FilepickerButton = ((System.Windows.Controls.Button)(target));
             
-            #line 81 "..\..\MainWindow.xaml"
+            #line 84 "..\..\MainWindow.xaml"
             this.FilepickerButton.Click += new System.Windows.RoutedEventHandler(this.FilepickerButton_Click);
             
             #line default
             #line hidden
             return;
-            case 43:
+            case 45:
             this.FileCopyButton = ((System.Windows.Controls.Button)(target));
             
-            #line 82 "..\..\MainWindow.xaml"
+            #line 85 "..\..\MainWindow.xaml"
             this.FileCopyButton.Click += new System.Windows.RoutedEventHandler(this.FileCopyButton_Click);
             
             #line default
             #line hidden
             return;
-            case 44:
+            case 46:
             this.Warning = ((System.Windows.Controls.Label)(target));
             return;
             }

@@ -179,7 +179,25 @@ namespace AWSMonitor
             ColumnCombo.SelectedItem = "_ANY_";
         }
 
+        static DataTable GetS3Table()
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("AccountID", typeof(string));
+            table.Columns.Add("Profile", typeof(string));
+            table.Columns.Add("Bucket", typeof(string));
 
+            table.Columns.Add("Permissions", typeof(string));
+            table.Columns.Add("WebsiteHosting", typeof(string));
+            table.Columns.Add("Logging", typeof(string));
+            table.Columns.Add("Events", typeof(string));
+            table.Columns.Add("Versioning", typeof(string));
+            table.Columns.Add("LifeCycle", typeof(string));
+            table.Columns.Add("Replication", typeof(string));
+            table.Columns.Add("Tags", typeof(string));
+            table.Columns.Add("RequesterPays", typeof(string));
+            
+            return table;
+        }
 
         static DataTable GetEC2StatusTable()
         {
@@ -1104,8 +1122,10 @@ namespace AWSMonitor
 
         public DataTable ScanProfile(ScanRequest Request)
         {
+            Dictionary<string, DataTable> ScanResults = new Dictionary<string, DataTable>();
             DataTable LUserTable = GetUsersStatusTable();
             DataTable EC2InstancesTable = GetEC2StatusTable();
+            DataTable S3DetailsTable = GetS3Table();
 
             Amazon.Runtime.AWSCredentials credential;
             var aprofile = Request.Profile;
@@ -1123,7 +1143,7 @@ namespace AWSMonitor
                 try
                 {
                     accountid = myUserList[0].Arn.Split(':')[4];//Get the ARN and extract the AccountID ID
-                    accountid = "ID: " + accountid;// Prefix space because Excel exsucks.
+                    accountid = "ID: " + accountid;// Prefix added because Excel exsucks.
                 }
                 catch(Exception ex)
                 {
@@ -1263,14 +1283,14 @@ namespace AWSMonitor
                             myrow["Access-Keys"] = aklist;
                             myrow["Groups"] = groups;
                         }
-                    }                   
+                    }
                 }
 
 
 
 
 
-
+                #region GetusersRegion
 
                 //////////////////////////////////////////////////////////
                 var MyDataTable = GetEC2StatusTable();
@@ -1442,9 +1462,9 @@ namespace AWSMonitor
                     }
 
                 }
+                #endregion
 
 
-                
                 return MyDataTable;
             }
             catch(Exception ex)
