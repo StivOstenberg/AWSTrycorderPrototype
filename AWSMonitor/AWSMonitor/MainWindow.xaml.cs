@@ -188,6 +188,7 @@ namespace AWSMonitor
             table.Columns.Add("AccountID", typeof(string));
             table.Columns.Add("Profile", typeof(string));
             table.Columns.Add("Bucket", typeof(string));
+            table.Columns.Add("Region", typeof(string));
             table.Columns.Add("CreationDate", typeof(string));
             table.Columns.Add("LastAccess", typeof(string));
             table.Columns.Add("Owner", typeof(string));
@@ -485,7 +486,7 @@ namespace AWSMonitor
 
                         if (gType.Equals("Group"))
                         {
-                            grants +=  gType + " - " + agrant.Grantee.URI + " - " + agrant.Permission + " - " + aMail + " - "  ;
+                            grants +=  gType + " - " + agrant.Grantee.URI + " - " + agrant.Permission + " - " + aMail  ;
                         }
                         else
                         {
@@ -499,13 +500,25 @@ namespace AWSMonitor
                     lastaccess = MDresponse.LastModified.ToString();
                     websitehosting = MDresponse.WebsiteRedirectLocation;
 
+                    if (websitehosting != null)
+                    {
+                        string rabbit = "";
+                    }
+                    else websitehosting = "";
+
+
+                    
+
+
+
 
 
 
                     abucketrow["AccountID"] = accountid;
                     abucketrow["Profile"] = aprofile;
                     abucketrow["Bucket"] = name;
-                    abucketrow["CreationDate"] = createddate;
+                    abucketrow["Region"] = region;
+                    abucketrow["CreationDate"] = createddate.ToString();
                     abucketrow["LastAccess"] = lastaccess;
                     abucketrow["Owner"] = owner;
                     abucketrow["Grants"] = grants;
@@ -1468,9 +1481,9 @@ namespace AWSMonitor
         {
             var outputfile = saveas();
             Dictionary<string, DataTable> mydata = new Dictionary<string, DataTable>();
+            mydata.Add("S3", RawS3);
             mydata.Add("Users", RawUsers);
             mydata.Add("EC2 Instances", RawEC2Results);
-            mydata.Add("S3", RawS3);
             ExportToExcel(mydata, outputfile);
         }
 
@@ -1604,9 +1617,6 @@ namespace AWSMonitor
         }
 
         #endregion Eventhandlers
-
-
-
 
 
         private void ShowHideEC2Columns()
