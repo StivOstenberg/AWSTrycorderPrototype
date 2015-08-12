@@ -479,7 +479,18 @@ namespace AWSMonitor
                     foreach (var agrant in grantlist.Grants)
                     {
                         if (grants.Length > 1) grants += "\n";
-                        grants += agrant.Grantee + " - " + agrant.Permission;
+                        var gName = agrant.Grantee.DisplayName;
+                        var gType = agrant.Grantee.Type.Value;
+                        var aMail = agrant.Grantee.EmailAddress;
+
+                        if (gType.Equals("Group"))
+                        {
+                            grants +=  gType + " - " + agrant.Grantee.URI + " - " + agrant.Permission + " - " + aMail + " - "  ;
+                        }
+                        else
+                        {
+                            grants += gName + " - "+ agrant.Permission + " - " + aMail;
+                        }
                     }
 
                     GetObjectMetadataRequest request = new GetObjectMetadataRequest();
