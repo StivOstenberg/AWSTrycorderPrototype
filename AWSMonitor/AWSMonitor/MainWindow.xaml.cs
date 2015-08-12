@@ -190,7 +190,7 @@ namespace AWSMonitor
             table.Columns.Add("Bucket", typeof(string));
             table.Columns.Add("Region", typeof(string));
             table.Columns.Add("CreationDate", typeof(string));
-            table.Columns.Add("LastAccess", typeof(string));
+            table.Columns.Add("LastAccess", typeof(string));// This works, but data returned is bogus.
             table.Columns.Add("Owner", typeof(string));
             table.Columns.Add("Grants", typeof(string));
 
@@ -469,7 +469,8 @@ namespace AWSMonitor
                     string grants = "";
                     string tags = "";
                     string lastaccess = "";
-                    string websitehosting = "";
+                    string defaultpage = "";
+                    string website = "";
                     //Now start pulling der einen data.
 
                     GetACLRequest GACR = new GetACLRequest();
@@ -494,21 +495,29 @@ namespace AWSMonitor
                         }
                     }
 
+
+
                     GetObjectMetadataRequest request = new GetObjectMetadataRequest();
                     request.BucketName = name;
                     GetObjectMetadataResponse MDresponse = BS3Client.GetObjectMetadata(request);
                     lastaccess = MDresponse.LastModified.ToString();
-                    websitehosting = MDresponse.WebsiteRedirectLocation;
+                    //defaultpage = MDresponse.WebsiteRedirectLocation;
 
-                    if (websitehosting != null)
+ 
+
+                    GetBucketWebsiteRequest GBWReq = new GetBucketWebsiteRequest();
+                    GBWReq.BucketName = name;
+                    GetBucketWebsiteResponse GBWRes = BS3Client.GetBucketWebsite(GBWReq);
+
+                    defaultpage = GBWRes.WebsiteConfiguration.IndexDocumentSuffix;
+
+
+                    if (defaultpage != null)
                     {
-                        string rabbit = "";
+                        website = @"http://" + name + @".s3-website-" + region + @".amazonaws.com/" + defaultpage;
                     }
-                    else websitehosting = "";
-
-
                     
-
+                    
 
 
 
@@ -523,7 +532,7 @@ namespace AWSMonitor
                     abucketrow["Owner"] = owner;
                     abucketrow["Grants"] = grants;
 
-                    abucketrow["WebsiteHosting"] = websitehosting;
+                    abucketrow["WebsiteHosting"] = website;
                     abucketrow["Logging"] = "X";
                     abucketrow["Events"] = "X";
                     abucketrow["Versioning"] = "X";
