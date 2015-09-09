@@ -71,7 +71,7 @@ namespace AWSMonitor
         {
             SaveFileDialog _SD = new SaveFileDialog();
             _SD.Filter = "Excel File (*.xls)|*.xls*";
-            _SD.FileName = "TrycorderOut";
+            _SD.FileName = "TrycorderOut" + DateTime.Now.Year + "-" + DateTime.Now.Month + "-" + DateTime.Now.Day + "-" + DateTime.Now.Hour + DateTime.Now.Minute;
             _SD.Title = "Save As";
             if (_SD.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -635,7 +635,7 @@ namespace AWSMonitor
                             }
                         }
 
-                        foreach (var atag in taglist)
+                        foreach (var atag in taglist)//Set instancename, and add value to combobox.
                         {
                             if (atag.Key.Equals("Name"))
                             {
@@ -668,7 +668,6 @@ namespace AWSMonitor
                                         select t.Instances[0].Platform).FirstOrDefault();
                         if (String.IsNullOrEmpty(platform)) platform = "Linux";
 
-                        //Need more info for SSH and SCP...
 
                         var Priv_IP = (from t in urtburgle
                                        where t.Instances[0].InstanceId.Equals(instanceid)
@@ -721,6 +720,12 @@ namespace AWSMonitor
 
                         if (String.IsNullOrEmpty(instancename)) instancename = "";
                         string rabbit = accountid + profile + myregion + instancename + instanceid + AZ + status + eventnumber + eventlist + tags + Priv_IP + publicIP + publicDNS + istate + ivirtType + instancetype + sglist;
+
+                        if(instancename.Contains("p1-job"))
+                        {
+                            string yup = "y";  
+                        }
+
 
                         EC2DetailsTable.Rows.Add(accountid, profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags, Priv_IP, publicIP, publicDNS, istate, ivirtType, instancetype, sglist);
 

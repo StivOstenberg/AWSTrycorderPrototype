@@ -33,6 +33,7 @@
                 <MenuItem x:Name="UCkAllUserCMI" Header="UnCheck All" HorizontalAlignment="Left" Width="184.8" StaysOpenOnClick="True" Click="UCkAllUserCMI_Checked" />
             </MenuItem>
             <MenuItem x:Name="About_Menu_Item" Header="About"/>
+            <Label x:Name="ProcessingLabel" Content="." FontSize="10" RenderTransformOrigin="0.841,4.133" Height="21" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="549"/>
 
         </Menu>
         <TabControl x:Name="TabControl" Grid.ColumnSpan="3" Margin="10,25,10.6,9.8" SelectionChanged="TabControl_SelectionChanged">
@@ -88,7 +89,6 @@
                     <Label x:Name="Warning" Content="Copy File to visible linux servers on EC2 tab." Grid.Column="2" HorizontalAlignment="Left" Height="34" Margin="18.2,278,0,0" VerticalAlignment="Top" Width="265" ClipToBounds="True"/>
                 </Grid>
             </TabItem>
-            <Label x:Name="ProcessingLabel" Content="." FontSize="10" RenderTransformOrigin="0.841,4.133" Height="21" VerticalAlignment="Bottom" Margin="0,-26,194.8,389" HorizontalAlignment="Right" Width="549"/>
 
         </TabControl>
 
