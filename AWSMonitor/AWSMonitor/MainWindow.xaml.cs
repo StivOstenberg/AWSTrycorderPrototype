@@ -439,108 +439,121 @@ namespace AWSMonitor
                 #endregion
 
                 #region S3Details
+
                 try { 
 
                 AmazonS3Client S3Client = new AmazonS3Client(credential,Amazon.RegionEndpoint.USEast1);
                 ListBucketsResponse response = S3Client.ListBuckets();
                 foreach (S3Bucket abucket in response.Buckets)
                 {
-
+                    
                     
                     DataRow abucketrow = GetS3DetailsTable().NewRow();
                     var name = abucket.BucketName;
 
-                    GetBucketLocationRequest gbr = new GetBucketLocationRequest();
-                    gbr.BucketName=name;
-                    GetBucketLocationResponse location = S3Client.GetBucketLocation(gbr);
-                    var region = location.Location.Value;
-                    if (region.Equals(""))region="us-east-1";
-                    var pointy = RegionEndpoint.GetBySystemName(region);
-
-
-
-                    //Build a config that references the buckets region.
-                    AmazonS3Config S3C = new AmazonS3Config();
-                    S3C.RegionEndpoint=pointy;
-                    AmazonS3Client BS3Client = new AmazonS3Client(credential, S3C);
-                 
-                    var createddate = abucket.CreationDate;
-                    string owner = "";
-                    string grants = "";
-                    string tags = "";
-                    string lastaccess = "";
-                    string defaultpage = "";
-                    string website = "";
-                    //Now start pulling der einen data.
-
-                    GetACLRequest GACR = new GetACLRequest();
-                    GACR.BucketName = name;
-                    var ACL = BS3Client.GetACL(GACR);
-                    var grantlist = ACL.AccessControlList;
-                    owner = grantlist.Owner.DisplayName;
-                    foreach (var agrant in grantlist.Grants)
+                    try
                     {
-                        if (grants.Length > 1) grants += "\n";
-                        var gName = agrant.Grantee.DisplayName;
-                        var gType = agrant.Grantee.Type.Value;
-                        var aMail = agrant.Grantee.EmailAddress;
+                        GetBucketLocationRequest gbr = new GetBucketLocationRequest();
+                        gbr.BucketName = name;
+                        GetBucketLocationResponse location = S3Client.GetBucketLocation(gbr);
+                        var region = location.Location.Value;
+                        if (region.Equals("")) region = "us-east-1";
+                        var pointy = RegionEndpoint.GetBySystemName(region);
 
-                        if (gType.Equals("Group"))
+
+
+                        //Build a config that references the buckets region.
+                        AmazonS3Config S3C = new AmazonS3Config();
+                        S3C.RegionEndpoint = pointy;
+                        AmazonS3Client BS3Client = new AmazonS3Client(credential, S3C);
+
+                        var createddate = abucket.CreationDate;
+                        string owner = "";
+                        string grants = "";
+                        string tags = "";
+                        string lastaccess = "";
+                        string defaultpage = "";
+                        string website = "";
+                        //Now start pulling der einen data.
+
+                        GetACLRequest GACR = new GetACLRequest();
+                        GACR.BucketName = name;
+                        var ACL = BS3Client.GetACL(GACR);
+                        var grantlist = ACL.AccessControlList;
+                        owner = grantlist.Owner.DisplayName;
+                        foreach (var agrant in grantlist.Grants)
                         {
-                            grants +=  gType + " - " + agrant.Grantee.URI + " - " + agrant.Permission + " - " + aMail  ;
+                            if (grants.Length > 1) grants += "\n";
+                            var gName = agrant.Grantee.DisplayName;
+                            var gType = agrant.Grantee.Type.Value;
+                            var aMail = agrant.Grantee.EmailAddress;
+
+                            if (gType.Equals("Group"))
+                            {
+                                grants += gType + " - " + agrant.Grantee.URI + " - " + agrant.Permission + " - " + aMail;
+                            }
+                            else
+                            {
+                                grants += gName + " - " + agrant.Permission + " - " + aMail;
+                            }
                         }
-                        else
+
+
+
+                        GetObjectMetadataRequest request = new GetObjectMetadataRequest();
+                        request.BucketName = name;
+                        GetObjectMetadataResponse MDresponse = BS3Client.GetObjectMetadata(request);
+                        lastaccess = MDresponse.LastModified.ToString();
+                        //defaultpage = MDresponse.WebsiteRedirectLocation;
+
+
+
+                        GetBucketWebsiteRequest GBWReq = new GetBucketWebsiteRequest();
+                        GBWReq.BucketName = name;
+                        GetBucketWebsiteResponse GBWRes = BS3Client.GetBucketWebsite(GBWReq);
+
+                        defaultpage = GBWRes.WebsiteConfiguration.IndexDocumentSuffix;
+
+
+                        if (defaultpage != null)
                         {
-                            grants += gName + " - "+ agrant.Permission + " - " + aMail;
+                            website = @"http://" + name + @".s3-website-" + region + @".amazonaws.com/" + defaultpage;
                         }
+
+
+                        //Amazon.S3.Model.req
+
+
+
+
+                        abucketrow["AccountID"] = accountid;
+                        abucketrow["Profile"] = aprofile;
+                        abucketrow["Bucket"] = name;
+                        abucketrow["Region"] = region;
+                        abucketrow["CreationDate"] = createddate.ToString();
+                        abucketrow["LastAccess"] = lastaccess;
+                        abucketrow["Owner"] = owner;
+                        abucketrow["Grants"] = grants;
+
+                        abucketrow["WebsiteHosting"] = website;
+                        abucketrow["Logging"] = "X";
+                        abucketrow["Events"] = "X";
+                        abucketrow["Versioning"] = "X";
+                        abucketrow["LifeCycle"] = "X";
+                        abucketrow["Replication"] = "X";
+                        abucketrow["Tags"] = "X";
+                        abucketrow["RequesterPays"] = "X";
+                        S3DetailsTable.Rows.Add(abucketrow.ItemArray);
                     }
-
-
-
-                    GetObjectMetadataRequest request = new GetObjectMetadataRequest();
-                    request.BucketName = name;
-                    GetObjectMetadataResponse MDresponse = BS3Client.GetObjectMetadata(request);
-                    lastaccess = MDresponse.LastModified.ToString();
-                    //defaultpage = MDresponse.WebsiteRedirectLocation;
-
- 
-
-                    GetBucketWebsiteRequest GBWReq = new GetBucketWebsiteRequest();
-                    GBWReq.BucketName = name;
-                    GetBucketWebsiteResponse GBWRes = BS3Client.GetBucketWebsite(GBWReq);
-
-                    defaultpage = GBWRes.WebsiteConfiguration.IndexDocumentSuffix;
-
-
-                    if (defaultpage != null)
+                    catch(Exception ex)
                     {
-                        website = @"http://" + name + @".s3-website-" + region + @".amazonaws.com/" + defaultpage;
+                        
+                        abucketrow["AccountID"] = accountid;
+                        abucketrow["Profile"] = aprofile;
+                        abucketrow["Bucket"] = name;
+                        abucketrow["Region"] = "Error opening bucket";
+                        S3DetailsTable.Rows.Add(abucketrow.ItemArray);
                     }
-                    
-                    
-                    //Amazon.S3.Model.req
-                    
-
-
-
-                    abucketrow["AccountID"] = accountid;
-                    abucketrow["Profile"] = aprofile;
-                    abucketrow["Bucket"] = name;
-                    abucketrow["Region"] = region;
-                    abucketrow["CreationDate"] = createddate.ToString();
-                    abucketrow["LastAccess"] = lastaccess;
-                    abucketrow["Owner"] = owner;
-                    abucketrow["Grants"] = grants;
-
-                    abucketrow["WebsiteHosting"] = website;
-                    abucketrow["Logging"] = "X";
-                    abucketrow["Events"] = "X";
-                    abucketrow["Versioning"] = "X";
-                    abucketrow["LifeCycle"] = "X";
-                    abucketrow["Replication"] = "X";
-                    abucketrow["Tags"] = "X";
-                    abucketrow["RequesterPays"] = "X";
-                    S3DetailsTable.Rows.Add(abucketrow.ItemArray);
                 }
 
                 }
@@ -1188,8 +1201,8 @@ namespace AWSMonitor
             var selecteditem = DaGrid.SelectedItem;// Get the datarowview
             DataRowView drv = (DataRowView)selecteditem;
             var myrow = drv.Row;
-            var TargetIP = myrow["Pub IP"];
-            if (TargetIP.Equals("")) TargetIP = myrow["Priv IP"];
+            var TargetIP = myrow["Pub_IP"];
+            if (TargetIP.Equals("")) TargetIP = myrow["Priv_IP"];
 
             if (File.Exists(puttyexe)) //No point if not installed.
             {

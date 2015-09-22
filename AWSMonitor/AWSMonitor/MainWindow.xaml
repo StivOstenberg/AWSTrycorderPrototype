@@ -62,17 +62,21 @@
             </TabItem>
             <TabItem x:Name="UserTab" Header="Users" ToolTip="User Details">
                 <Grid x:Name="UserGridLayout" Background="#FFE5E5E5">
-                    <DataGrid x:Name="UserGrid" Loaded="UserGrid_Loaded" Margin="0,0,-0.2,57.4" AlternatingRowBackground="#FF84FAF8"/>
-                    <Button x:Name="ClearFilters_Copy" Content="Clr" HorizontalAlignment="Right" Margin="0,0,9.8,28.4" VerticalAlignment="Bottom" Width="36" ToolTip="Remove applied filters" IsEnabled="True" Height="22" RenderTransformOrigin="0.917,0.609" Click="ClearFilters_Copy_Click"/>
-                    <Label Content="FilterField" HorizontalAlignment="Right" Margin="0,0,242.8,26.4" VerticalAlignment="Bottom" RenderTransformOrigin="0.427,-0.252" Height="26" Width="64"/>
-                    <ComboBox x:Name="UserFilterFieldCombo" Margin="0,0,128.8,28.4" ToolTip="Column to Filter On" HorizontalAlignment="Right" Width="118" Height="22" VerticalAlignment="Bottom"/>
-                    <TextBox x:Name="UserFilterString" HorizontalAlignment="Right" Height="23" Margin="0,0,62.8,0.4" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="179" TextChanged="FilterTagText_TextChanged"/>
-                    <Label Content="FilterString" HorizontalAlignment="Right" Margin="0,0,246.8,1.4" VerticalAlignment="Bottom" RenderTransformOrigin="0.427,-0.252" Height="26" Width="73"/>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="25*"/>
+                        <ColumnDefinition Width="948*"/>
+                    </Grid.ColumnDefinitions>
+                    <DataGrid x:Name="UserGrid" Loaded="UserGrid_Loaded" Margin="0,0,-0.2,57.4" AlternatingRowBackground="#FF84FAF8" Grid.ColumnSpan="2"/>
+                    <Button x:Name="ClearFilters_Copy" Content="Clr" HorizontalAlignment="Right" Margin="0,0,9.8,28.4" VerticalAlignment="Bottom" Width="36" ToolTip="Remove applied filters" IsEnabled="True" Height="22" RenderTransformOrigin="0.917,0.609" Click="ClearFilters_Copy_Click" Grid.Column="1"/>
+                    <Label Content="FilterField" HorizontalAlignment="Right" Margin="0,0,242.8,26.4" VerticalAlignment="Bottom" RenderTransformOrigin="0.427,-0.252" Height="26" Width="64" Grid.Column="1"/>
+                    <ComboBox x:Name="UserFilterFieldCombo" Margin="0,0,128.8,28.4" ToolTip="Column to Filter On" HorizontalAlignment="Right" Width="118" Height="22" VerticalAlignment="Bottom" Grid.Column="1"/>
+                    <TextBox x:Name="UserFilterString" HorizontalAlignment="Right" Height="23" Margin="0,0,62.8,0.4" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="179" TextChanged="FilterTagText_TextChanged" Grid.Column="1"/>
+                    <Label Content="FilterString" HorizontalAlignment="Right" Margin="0,0,246.8,1.4" VerticalAlignment="Bottom" RenderTransformOrigin="0.427,-0.252" Height="26" Width="73" Grid.Column="1"/>
                 </Grid>
             </TabItem>
             <TabItem x:Name="S3" Header="S3" ToolTip="S3 Information" RenderTransformOrigin="0.538,2.852">
                 <Grid x:Name="S3UIGrid" Background="#FFE5E5E5" Margin="0,0,-0.2,-3.6">
-                    <DataGrid x:Name="S3DataGrid" Margin="0,0,0,55"/>
+                    <DataGrid x:Name="S3DataGrid" Margin="0,0,0,55" AlternationCount="1"/>
                 </Grid>
             </TabItem>
             <TabItem x:Name="MiscTab" Header="Misc" ToolTip="Danger.   This is where I stick stuff that is dicey.">
