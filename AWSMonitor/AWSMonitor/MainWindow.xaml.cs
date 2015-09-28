@@ -1055,6 +1055,7 @@ namespace AWSMonitor
         private void ClearFilters_Click(object sender, RoutedEventArgs e)
         {
             DaGrid.ItemsSource = RawEC2Results.AsDataView();
+            FilterTagText.Text = "";
             ProcessingLabel.Content = "Results Displayed: " + DaGrid.Items.Count;
             ShowHideEC2Columns();
         }
@@ -1169,8 +1170,8 @@ namespace AWSMonitor
             var selecteditem = DaGrid.SelectedItem;// Get the datarowview
             DataRowView drv = (DataRowView)selecteditem;
             var myrow = drv.Row;
-            var TargetIP = myrow["Pub IP"];
-            if (TargetIP.Equals("")) TargetIP = myrow["Priv IP"];
+            var TargetIP = myrow["Pub_IP"];
+            if (TargetIP.Equals("")) TargetIP = myrow["Priv_IP"];
 
 
             return;  //Not executing below code until I figure out how we shall manage the password going forward.
