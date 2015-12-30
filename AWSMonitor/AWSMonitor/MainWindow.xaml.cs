@@ -604,14 +604,18 @@ namespace AWSMonitor
                     {
 
                         indatarequest.InstanceIds.Add(instat.InstanceId);
+                        indatarequest.InstanceIds.Sort();
                     }
-                    DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
 
+
+                    //DescribeInstancesResult DescResult = ec2.DescribeInstances(indatarequest);
+                    DescribeInstancesResult DescResult = ec2.DescribeInstances();
 
                     int count = instatresponse.InstanceStatuses.Count();
-
+                    int itindex = -1;
                     foreach (var instat in instatresponse.InstanceStatuses)
                     {
+                        itindex++;
                         //Collect the datases
                         string instanceid = instat.InstanceId;
                         string instancename = "";
@@ -632,6 +636,25 @@ namespace AWSMonitor
 
                         string eventlist = "";
                         var urtburgle = DescResult.Reservations;
+
+                        var myinstance = new Reservation();
+                        if (instanceid.Contains("i-a8535657"))//Troubleshooting....
+                        {
+                            var truebert = false;
+                        }
+                        List<String> innies = new List<String>();
+                        foreach (Reservation arez in DescResult.Reservations)
+                        {
+                            var checky = arez.Instances[0].InstanceId;
+                            innies.Add(checky);
+                            if(arez.Instances[0].InstanceId.Equals(instanceid))
+                            {
+                                myinstance = arez;
+                            }
+                        }
+                        innies.Sort();
+
+
 
                         string tags = ""; // Holds the list of tags to print out.
 
@@ -658,6 +681,10 @@ namespace AWSMonitor
                             {
                                 TagFilterCombo.Items.Add(atag.Key);
                             }
+                            else
+                            {
+                                TagFilterCombo.Items.Add(atag.Key);
+                            }
                             if (tags.Length > 1)
                             {
                                 tags += "\n" + atag.Key + ":" + atag.Value;
@@ -676,16 +703,26 @@ namespace AWSMonitor
                             }
                         }
 
+
                         var platform = (from t in urtburgle
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].Platform).FirstOrDefault();
                         if (String.IsNullOrEmpty(platform)) platform = "Linux";
 
 
-                        var Priv_IP = (from t in urtburgle
+
+                        var Priv_IP = (from t in DescResult.Reservations
                                        where t.Instances[0].InstanceId.Equals(instanceid)
                                        select t.Instances[0].PrivateIpAddress).FirstOrDefault();
-                        if (String.IsNullOrEmpty(Priv_IP)) Priv_IP = "?";
+
+                        var disInstance = (from t in urtburgle
+                                   where t.Instances[0].InstanceId.Equals(instanceid)
+                                   select t).FirstOrDefault();
+
+                        if (String.IsNullOrEmpty(Priv_IP))
+                        {
+                            Priv_IP = "?";
+                        }
 
                         var publicIP = (from t in urtburgle
                                         where t.Instances[0].InstanceId.Equals(instanceid)
@@ -696,6 +733,9 @@ namespace AWSMonitor
                                          where t.Instances[0].InstanceId.Equals(instanceid)
                                          select t.Instances[0].PublicDnsName).FirstOrDefault();
                         if (String.IsNullOrEmpty(publicDNS)) publicDNS = "";
+
+
+
 
                         //Virtualization type (HVM, Paravirtual)
                         var ivirtType = (from t in urtburgle
@@ -1526,6 +1566,7 @@ namespace AWSMonitor
             //Select file
             string credfile = Filepicker("All Files|*.*");
             //Import creds
+            if (credfile.Equals("")) return;
             var txt = File.ReadAllText(credfile);
             Dictionary<string, Dictionary<string, string>> ini = new Dictionary<string, Dictionary<string, string>>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -1787,6 +1828,10 @@ namespace AWSMonitor
             }
         }
 
+        private void FileMenu_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 
     public class ScanRequest

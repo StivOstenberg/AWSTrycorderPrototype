@@ -11,7 +11,7 @@
         <Button x:Name="EC2EventScanButton" Content="Scan" HorizontalAlignment="Right" Margin="0,20,10.6,0" Width="53" Height="22" VerticalAlignment="Top" Click="EC2EventScanButton_Click" Grid.Column="2" ToolTip="Scan EC2 Instances"/>
         <ProgressBar x:Name="ProgressBar1" HorizontalAlignment="Right" Margin="0,20,81.6,0" Width="121" Height="22" VerticalAlignment="Top" Grid.Column="2" ToolTip="Number of Regions to scan"/>
         <Menu x:Name="MainMenu" Grid.ColumnSpan="3" Height="20" Margin="0,0,-0.4,0" VerticalAlignment="Top">
-            <MenuItem x:Name="FileMenu" Header="File" >
+            <MenuItem x:Name="FileMenu" Header="File" Click="FileMenu_Click" >
                 <MenuItem x:Name="ExportExcel" Header="Export to Excel" HorizontalAlignment="Left"  Click="ExportAll_Click"/>
                 <MenuItem x:Name="LoadCred" Header="Load Credential File" HorizontalAlignment="Left" Click="LoadCred_Click"  />
             </MenuItem>
