@@ -216,6 +216,8 @@ namespace AWSMonitor
             table.Columns.Add("Region", typeof(string));
             table.Columns.Add("Name", typeof(string));
             table.Columns.Add("InstanceID", typeof(string));
+            table.Columns.Add("AMI", typeof(string));
+            table.Columns.Add("AMIDescription", typeof(string));
             table.Columns.Add("AvailabilityZone", typeof(string));
             table.Columns.Add("Platform", typeof(string));
             table.Columns.Add("Status", typeof(string));
@@ -504,11 +506,18 @@ namespace AWSMonitor
                         request.BucketName = name;
                         GetObjectMetadataResponse MDresponse = BS3Client.GetObjectMetadata(request);
                         lastaccess = MDresponse.LastModified.ToString();
-                        //defaultpage = MDresponse.WebsiteRedirectLocation;
+                        defaultpage = MDresponse.WebsiteRedirectLocation;
+if(defaultpage==null)
+                            { defaultpage = ""; }
+                            else
+                            {
+                                string rabbit = "";
+                            }
 
 
 
-                        GetBucketWebsiteRequest GBWReq = new GetBucketWebsiteRequest();
+
+                            GetBucketWebsiteRequest GBWReq = new GetBucketWebsiteRequest();
                         GBWReq.BucketName = name;
                         GetBucketWebsiteResponse GBWRes = BS3Client.GetBucketWebsite(GBWReq);
 
@@ -635,7 +644,7 @@ namespace AWSMonitor
                         int eventnumber = instat.Events.Count();
 
                         string eventlist = "";
-                        var urtburgle = DescResult.Reservations;
+                        var reservations = DescResult.Reservations;
 
                         var myinstance = new Reservation();
                         if (instanceid.Contains("i-a8535657"))//Troubleshooting....
@@ -704,7 +713,7 @@ namespace AWSMonitor
                         }
 
 
-                        var platform = (from t in urtburgle
+                        var platform = (from t in reservations
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].Platform).FirstOrDefault();
                         if (String.IsNullOrEmpty(platform)) platform = "Linux";
@@ -715,7 +724,7 @@ namespace AWSMonitor
                                        where t.Instances[0].InstanceId.Equals(instanceid)
                                        select t.Instances[0].PrivateIpAddress).FirstOrDefault();
 
-                        var disInstance = (from t in urtburgle
+                        var disInstance = (from t in reservations
                                    where t.Instances[0].InstanceId.Equals(instanceid)
                                    select t).FirstOrDefault();
 
@@ -724,12 +733,12 @@ namespace AWSMonitor
                             Priv_IP = "?";
                         }
 
-                        var publicIP = (from t in urtburgle
+                        var publicIP = (from t in reservations
                                         where t.Instances[0].InstanceId.Equals(instanceid)
                                         select t.Instances[0].PublicIpAddress).FirstOrDefault();
                         if (String.IsNullOrEmpty(publicIP)) publicIP = "";
 
-                        var publicDNS = (from t in urtburgle
+                        var publicDNS = (from t in reservations
                                          where t.Instances[0].InstanceId.Equals(instanceid)
                                          select t.Instances[0].PublicDnsName).FirstOrDefault();
                         if (String.IsNullOrEmpty(publicDNS)) publicDNS = "";
@@ -738,18 +747,42 @@ namespace AWSMonitor
 
 
                         //Virtualization type (HVM, Paravirtual)
-                        var ivirtType = (from t in urtburgle
+                        var ivirtType = (from t in reservations
                                          where t.Instances[0].InstanceId.Equals(instanceid)
                                          select t.Instances[0].VirtualizationType).FirstOrDefault();
                         if (String.IsNullOrEmpty(ivirtType)) ivirtType = "?";
 
                         // InstanceType (m3/Large etc)
-                        var instancetype = (from t in urtburgle
+                        var instancetype = (from t in reservations
                                             where t.Instances[0].InstanceId.Equals(instanceid)
                                             select t.Instances[0].InstanceType).FirstOrDefault();
                         if (String.IsNullOrEmpty(instancetype)) instancetype = "?";
 
-                        var SGs = (from t in urtburgle
+
+                        //Test section to try to pull out AMI data
+                        string AMIDesc = "";
+                        var AMI = (from t in reservations
+                                   where t.Instances[0].InstanceId.Equals(instanceid)
+                                   select t.Instances[0].ImageId).FirstOrDefault();
+                        if (string.IsNullOrEmpty(AMI))
+                        {
+                            AMI = "";
+                        }
+                        else
+                        {
+                            DescribeImagesRequest DIR = new DescribeImagesRequest();
+                            DIR.ImageIds.Add(AMI);
+                            var imresp = ec2.DescribeImages(DIR);
+                            var idata = imresp.Images;
+                            if (idata.Count > 0)
+                            {
+                                AMIDesc = idata[0].Description;
+                            }
+                            if (String.IsNullOrEmpty(AMIDesc)) AMIDesc = "AMI Image not accessible!!";
+                        }
+
+                        //
+                        var SGs = (from t in reservations
                                    where t.Instances[0].InstanceId.Equals(instanceid)
                                    select t.Instances[0].SecurityGroups);
 
@@ -780,7 +813,7 @@ namespace AWSMonitor
                         }
 
 
-                        EC2DetailsTable.Rows.Add(accountid, profile, myregion, instancename, instanceid, AZ, platform, status, eventnumber, eventlist, tags, Priv_IP, publicIP, publicDNS, istate, ivirtType, instancetype, sglist);
+                            EC2DetailsTable.Rows.Add(accountid, profile, myregion, instancename, instanceid, AMI, AMIDesc, AZ, platform, status, eventnumber, eventlist, tags, Priv_IP, publicIP, publicDNS, istate, ivirtType, instancetype, sglist);
 
 
                     }
